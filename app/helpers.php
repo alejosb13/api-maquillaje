@@ -169,7 +169,7 @@ function calcularDeudaFacturasGlobal($clienteID)
 
     $cliente->factura = $cliente->facturas()->where([
         ['status', '=', 1],
-        ['tipo_venta', '=', 1]  // 1 = Credito | 2 = Contado,
+        // ['tipo_venta', '=', 1]  // 1 = Credito | 2 = Contado,la comente porque hay casos que tienen factura contado
         // ['status_pagado', '=', 0] // 0 = en proceso | 1 = Finalizado,
     ])->get();
 
@@ -188,6 +188,8 @@ function calcularDeudaFacturasGlobal($clienteID)
     if (count($cliente->factura) > 0) {
         foreach ($cliente->factura as $factura) {
             $totalAbonos =  $totalAbonos - $factura["monto"];
+            // print_r("abono ".$totalAbonos);
+            // print_r(" Factura  ".$factura["monto"]);
         }
     }
 

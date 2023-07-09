@@ -303,15 +303,28 @@ class LogisticaController extends Controller
             $clienteStore = $clienteStore->where('user_id', $request->userId);
         }
 
-        $clientes = $clienteStore->get();
+        $clientes_id = [];
+        $facturasQuery = Factura::where([
+            ['status', '=', 1],
+        ])->groupBy('cliente_id')->select("cliente_id")->get();
+
+        if (count($facturasQuery) > 0) {
+            foreach ($facturasQuery as $factura) {
+                $clientes_id[] = $factura->cliente_id;
+            }
+        }
+
+        // print_r($clientes_id);
+
+        $clientes = $clienteStore->wherein('id', $clientes_id)->get();
 
         // $query = DB::getQueryLog();
         // print_r(json_encode($query));
         if (count($clientes) > 0) {
             foreach ($clientes as $cliente) {
-                $clientes->frecuencia = $cliente->frecuencia;
-                $clientes->categoria = $cliente->categoria;
-                $clientes->facturas = $cliente->facturas;
+                $cliente->frecuencia = $cliente->frecuencia;
+                $cliente->categoria = $cliente->categoria;
+                $cliente->facturas = $cliente->facturas;
             }
 
             $response = $clientes;

@@ -169,7 +169,7 @@ function calcularDeudaFacturasGlobal($clienteID)
 
     $cliente->factura = $cliente->facturas()->where([
         ['status', '=', 1],
-        // ['tipo_venta', '=', 1]  // 1 = Credito | 2 = Contado,la comente porque hay casos que tienen factura contado
+        ['tipo_venta', '=', 1]  // 1 = Credito | 2 = Contado,la comente porque hay casos que tienen factura contado
         // ['status_pagado', '=', 0] // 0 = en proceso | 1 = Finalizado,
     ])->get();
 
@@ -351,7 +351,8 @@ function queryEstadoCuenta($cliente_id)
                 FROM clientes c
                 INNER JOIN facturas f ON f.cliente_id = c.id
                 WHERE
-                    f.`status` = 1
+                    f.`status` = 1 AND
+                    f.tipo_venta = 1
                     UNION ALL
                 SELECT
                     c.id AS cliente_id,

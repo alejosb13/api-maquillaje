@@ -523,7 +523,8 @@ class ListadosPaginasController extends Controller
                 // ->where('estado', 1)
                 ->where('id', $request->userId)
                 ->first();
-
+            
+                // print_r( $request->userId);
             if (!$user) {
                 return $query;
             }
@@ -578,9 +579,18 @@ class ListadosPaginasController extends Controller
             $query = $q;
 
             // nombre cliente y empresa
-            $query = $query->Where('nombreCompleto', 'LIKE', '%' . $request->filter . '%')
-                ->orWhere('nombreEmpresa', 'LIKE', '%' . $request->filter . '%')
-                ->orWhere('direccion_casa', 'LIKE', '%' . $request->filter . '%');
+            // $query = $query->where('nombreCompleto', 'LIKE', '%' . $request->filter . '%',"or")
+            //     ->where('nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or")
+            //     ->where('direccion_casa', 'LIKE', '%' . $request->filter . '%',"or");
+            $query = $query->where(
+                [
+                    ['nombreCompleto', 'LIKE', '%' . $request->filter . '%',"or"],
+                    ['nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or"],
+                    ['direccion_casa', 'LIKE', '%' . $request->filter . '%',"or"],
+                ]
+                );
+            //     ->where('nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or")
+            //     ->where('direccion_casa', 'LIKE', '%' . $request->filter . '%',"or");
 
 
             return $query;
@@ -591,8 +601,8 @@ class ListadosPaginasController extends Controller
         } else {
             $clientes = $clientes->get();
         }
+        
         // dd(DB::getQueryLog());
-
 
         if (count($clientes) > 0) {
             foreach ($clientes as $cliente) {

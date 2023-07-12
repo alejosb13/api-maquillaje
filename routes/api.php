@@ -108,6 +108,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('cliente/deuda/{id}',  [ClienteController::class, 'calcularDeudaVendedorCliente']);
     Route::get('cliente/deuda',  [ClienteController::class, 'calcularDeudaVendedorTodosClientes']);
     Route::get('cliente/deuda/user/{id}',  [ClienteController::class, 'calcularDeudaVendedorTodosClientesPorUsuario']);
+    Route::get('cliente/usuario/{id}',  [ClienteController::class, 'clientesVendedor']);
     Route::resource('cliente', ClienteController::class);
     
     Route::resource('roles', RoleController::class);

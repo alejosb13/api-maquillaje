@@ -67,6 +67,11 @@ function validarStatusPagadoGlobal($clienteID)
                 $factura["status_pagado_at"] = null;
             }
 
+            if($factura["monto"] == 0 && $factura["saldo_restante"] == 0){
+                $factura["status_pagado"] = 1;
+                $factura["status_pagado_at"] = $fechaPago;
+            }
+
             $factura->update();
         }
     }

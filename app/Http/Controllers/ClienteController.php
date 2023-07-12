@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\Factura;
 use App\Models\FacturaHistorial;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ClienteController extends Controller
@@ -350,32 +352,71 @@ class ClienteController extends Controller
                 $dataAbono = calcularDeudaFacturasGlobal($cliente->id);
 
                 $response["deuda"] = $dataAbono;
-                $response["deuda_vendedor"] = ($dataAbono > 0) ? TRUE: FALSE;
+                $response["deuda_vendedor"] = ($dataAbono > 0) ? TRUE : FALSE;
             }
         }
 
         return response()->json($response, $status);
     }
 
+    function clientesVendedor(Request $request, $userId)
+    {
+        $response = [];
+        $status = 200;
+        // DB::enableQueryLog();
+
+        $clientes =  Cliente::where('estado', 1);
+
+        $clientes->when($userId && $userId != 0, function ($q) use ($userId) {
+            $query = $q;
+            // var_dump($userId);
+            return $query->where('user_id', $userId);
+        });
+
+        $clientes->when($request->filter && !is_numeric($request->filter), function ($q) use ($request) {
+
+            return $q->where('nombreCompleto', 'LIKE', '%' . $request->filter . '%');
+        }); // Fin Filtrado por cliente
+
+        $clientes = $clientes->get();
+        // $qe = DB::getQueryLog();
+        // dd($qe);
+
+        //dd( $clientes);
+        if (count($clientes) > 0) {
+            foreach ($clientes as $key => $cliente) {
+                // dd($cliente->frecuencias);
+                // validarStatusPagadoGlobal($cliente->id);
+                // $clientes->frecuencia = $cliente->frecuencia;
+                $clientes->categoria = $cliente->categoria;
+                // $clientes->facturas = $cliente->facturas;
+            }
+
+            $response[] = $clientes;
+        }
+
+        return response()->json($clientes, $status);
+    }
+
     function calcularDeudaVendedorTodosClientesPorUsuario($userId)
-    {// negativo es que debe el cliente y positivo es que le debemos al cliente
+    { // negativo es que debe el cliente y positivo es que le debemos al cliente
         $response = [];
         $status = 200;
 
         $clientes =  FacturaHistorial::where(
             [
-                ["user_id","=",$userId]
+                ["user_id", "=", $userId]
             ]
         )->get();
 
         foreach ($clientes as $cliente) {
             // print_r(json_encode($cliente));
             $dataAbono = calcularDeudaFacturasGlobal($cliente->cliente_id);
-            
+
             array_push($response, [
                 "cliente_id" => $cliente->cliente_id,
                 "deuda" => $dataAbono,
-                "deudaVendedor" => ($dataAbono > 0) ? TRUE: FALSE,
+                "deudaVendedor" => ($dataAbono > 0) ? TRUE : FALSE,
             ]);
         }
 
@@ -383,7 +424,7 @@ class ClienteController extends Controller
     }
 
     function calcularDeudaVendedorTodosClientes()
-    {// negativo es que debe el cliente y positivo es que le debemos al cliente
+    { // negativo es que debe el cliente y positivo es que le debemos al cliente
         $response = [];
         $status = 200;
 
@@ -395,7 +436,7 @@ class ClienteController extends Controller
             array_push($response, [
                 "cliente_id" => $cliente->id,
                 "deuda" => $dataAbono,
-                "deudaVendedor" => ($dataAbono > 0) ? TRUE: FALSE,
+                "deudaVendedor" => ($dataAbono > 0) ? TRUE : FALSE,
             ]);
         }
 

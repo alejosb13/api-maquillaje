@@ -22,7 +22,7 @@ class RoleValidation
             $dataCierre = ConfigurationApp::first();
 
             if ($dataCierre->cierre == 1) {
-                if (!$request->user()->hasAnyRole(["administrador", "supervisor"])){
+                if (!$request->user()->hasAnyRole(["administrador"])){
                     return response()-> json(['status' => 401,"message"=> "Unauthorized"],401);
                 } 
             } 

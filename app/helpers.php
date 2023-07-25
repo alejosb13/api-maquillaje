@@ -693,14 +693,14 @@ function newrecuperacionQuery($user, $dateini, $dateFin)
 
     // Inicio el calculo de recuperacion
 
-    $abonosStore =  FacturaHistorial::where('user_id', $userId)
-        // ->whereBetween('created_at', [$inicioMesAnterior." 00:00:00",  $finMesAnterior ." 23:59:59"])
-        ->where('created_at', "<", $inicioMesActual . " 00:00:00")
-        ->where('estado', 1);
+    // $abonosStore =  FacturaHistorial::where('user_id', $userId)
+    //     // ->whereBetween('created_at', [$inicioMesAnterior." 00:00:00",  $finMesAnterior ." 23:59:59"])
+    //     ->where('created_at', "<", $inicioMesActual . " 00:00:00")
+    //     ->where('estado', 1);
 
-    $abonos = $abonosStore->get();
+    // $abonos = $abonosStore->get();
 
-    $response["abonosTotal"] =  (float) number_format((float) sumaRecuperacion($abonos), 2, ".", "");
+    // $response["abonosTotal"] =  (float) number_format((float) sumaRecuperacion($abonos), 2, ".", "");
 
     $clienteStoreCurrentMount =  FacturaHistorial::where('user_id', $userId)
         ->whereBetween('created_at', [$inicioMesActual . " 00:00:00",  $finMesActual . " 23:59:59"])

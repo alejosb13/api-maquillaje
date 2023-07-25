@@ -151,7 +151,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::post('configuracion/taza-cambio', [ConfiguracionController::class, 'saveTazaCambio']);
     Route::get('configuracion/taza-cambio', [ConfiguracionController::class, 'getTazaCambio']);
     Route::get('configuracion/cierre', [ConfiguracionController::class, 'getCierraConfig']);
-    Route::patch('configuracion/cierre', [ConfiguracionController::class, 'updateCierraConfig']);
+    Route::put('configuracion/cierre', [ConfiguracionController::class, 'updateCierraConfig']);
     
     Route::patch('configuracion/taza-cambio/factura', [ConfiguracionController::class, 'updateTazaCambioFactura']);
     Route::post('configuracion/taza-cambio/factura', [ConfiguracionController::class, 'saveTazaCambioFactura']);

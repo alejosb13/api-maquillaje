@@ -85,6 +85,7 @@ Route::resource('devoluciones-producto', DevolucionProductoController::class);
 Route::get('script/AsignarPrecioPorUnidadGlobal', [ScriptController::class, 'AsignarPrecioPorUnidadGlobal']);
 Route::get('script/validarStatusPagadoGlobal', [ScriptController::class, 'validarStatusPagadoGlobal']);
 Route::get('script/actualizarPrecioFactura/{id}', [ScriptController::class, 'ActualizarPrecioFactura']);
+Route::get('script/validar-meta-recuperacion', [ScriptController::class, 'validarMetaRecuperacion']);
 
 Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supervisor','cierre']], function () {
     Route::post('logistica/cartera-date', [LogisticaController::class, 'carteraDate']);

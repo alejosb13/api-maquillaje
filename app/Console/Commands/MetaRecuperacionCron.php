@@ -58,7 +58,8 @@ class MetaRecuperacionCron extends Command
             $meta_recuperacion = getMetaRecuperacionMensual($user->id, $inicioMesActual, $finMesActual);
 
             if (!$meta_recuperacion) {
-                crearMetaRecuperacionMensual();
+                // crearMetaRecuperacionMensual();
+                crearMetaRecuperacionMensualCuotas();
                 $insertoNuevaMeta = true;
 
 

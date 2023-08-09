@@ -51,7 +51,6 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('/profile', function (Request $request) {
         return auth()->user();
     });
-
 });
 
 // Route::middleware(
@@ -87,7 +86,9 @@ Route::get('script/validarStatusPagadoGlobal', [ScriptController::class, 'valida
 Route::get('script/actualizarPrecioFactura/{id}', [ScriptController::class, 'ActualizarPrecioFactura']);
 Route::get('script/validar-meta-recuperacion', [ScriptController::class, 'validarMetaRecuperacion']);
 
-Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supervisor','cierre']], function () {
+
+
+Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supervisor', 'cierre']], function () {
     Route::post('logistica/cartera-date', [LogisticaController::class, 'carteraDate']);
     Route::post('logistica/recibo-date', [LogisticaController::class, 'reciboDate']);
     Route::post('logistica/mora-30-60', [LogisticaController::class, 'Mora30A60']);
@@ -102,7 +103,8 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::post('logistica/ventas', [LogisticaController::class, 'ventasDate']);
     Route::post('logistica/recuperacion', [LogisticaController::class, 'recuperacion']);
     Route::post('logistica/productos-vendidos', [LogisticaController::class, 'productosVendidos']);
-    
+    Route::post('logistica/resumen-dashboard', [LogisticaController::class, 'resumenDashboard']);
+
 
     Route::get('cliente/factura/{id}',  [ClienteController::class, 'clienteToFactura']);
     Route::get('cliente/abono/{id}',  [ClienteController::class, 'calcularAbono']);
@@ -111,49 +113,49 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('cliente/deuda/user/{id}',  [ClienteController::class, 'calcularDeudaVendedorTodosClientesPorUsuario']);
     Route::get('cliente/usuario/{id}',  [ClienteController::class, 'clientesVendedor']);
     Route::resource('cliente', ClienteController::class);
-    
+
     Route::resource('roles', RoleController::class);
-    
+
     Route::resource('usuarios', UsuarioController::class);
-    
+
     Route::put('update-password/{id}',  [UsuarioController::class, 'updatePassword']);
-    
+
     Route::resource('categorias', CategoriaController::class);
-    
+
     Route::resource('frecuencias', FrecuenciaController::class);
     Route::resource('frecuencias-factura', FrecuenciasFacturasController::class);
-    
+
     Route::resource('productos', ProductosController::class);
-    
+
     Route::resource('factura-detalle', FacturaDetallesController::class);
-    
+
     Route::resource('facturas', FacturaController::class);
     Route::put('facturas/despachar/{id}', [FacturaController::class, 'despachar']);
     Route::put('facturas/entregada/{id}', [FacturaController::class, 'entregada']);
-    
+
     Route::resource('abonos', FacturaHistorial::class);
-    
+
     Route::resource('recibos', ReciboController::class);
     Route::resource('recibos/historial/contado', ReciboHistorialContadoController::class);
     Route::resource('recibos/historial/credito', ReciboHistorialController::class);
     Route::get('recibos/number/{id}', [ReciboController::class, 'getNumeroRecibo']);
-    
+
     Route::resource('metas', MetasController::class);
-    Route::put('metas-historial/{id}', [MetasController::class,'editarMetaHistorial']);
-    Route::delete('metas-historial/{id}', [MetasController::class,'eliminarMetaHistorial']);
-    Route::post('metas-historial/new', [MetasController::class,'crearMetaHistorial']);
-    
+    Route::put('metas-historial/{id}', [MetasController::class, 'editarMetaHistorial']);
+    Route::delete('metas-historial/{id}', [MetasController::class, 'eliminarMetaHistorial']);
+    Route::post('metas-historial/new', [MetasController::class, 'crearMetaHistorial']);
+
     Route::get('regalos/detalle/{id}', [RegalosController::class, 'regaloXdetalle']);
     Route::get('regalos/factura/{id}', [RegalosController::class, 'regalosXFactura']);
     Route::resource('regalos', RegalosController::class);
 
-    
+
     Route::post('configuracion/migracion', [ConfiguracionController::class, 'migracion']);
     Route::post('configuracion/taza-cambio', [ConfiguracionController::class, 'saveTazaCambio']);
     Route::get('configuracion/taza-cambio', [ConfiguracionController::class, 'getTazaCambio']);
     Route::get('configuracion/cierre', [ConfiguracionController::class, 'getCierraConfig']);
     Route::put('configuracion/cierre', [ConfiguracionController::class, 'updateCierraConfig']);
-    
+
     Route::patch('configuracion/taza-cambio/factura', [ConfiguracionController::class, 'updateTazaCambioFactura']);
     Route::post('configuracion/taza-cambio/factura', [ConfiguracionController::class, 'saveTazaCambioFactura']);
     Route::get('configuracion/taza-cambio/factura/{id}', [ConfiguracionController::class, 'getTazaCambioFactura']);

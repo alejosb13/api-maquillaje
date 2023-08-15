@@ -10,6 +10,7 @@ use App\Models\Meta;
 use App\Models\MetaHistorial;
 use App\Models\MetaRecuperacion;
 use App\Models\Producto;
+use App\Models\Recibo;
 use App\Models\TazaCambio;
 use App\Models\User;
 use Carbon\Carbon;
@@ -855,6 +856,218 @@ function crearMetaRecuperacionMensual()
     }
 }
 
+function incentivoSupervisorQuery($request)
+{
+    $response = ["dataVendedores" => []];
+    $users = User::where([
+        ["estado", "=", 1]
+    ])->get();
+
+    if (empty($request->dateIni)) {
+        $dateIni = Carbon::now();
+    } else {
+        $dateIni = Carbon::parse($request->dateIni);
+    }
+
+    if (empty($request->dateFin)) {
+        $dateFin = Carbon::now();
+    } else {
+        $dateFin = Carbon::parse($request->dateFin);
+    }
+
+    $sumaRecuperacion = 0;
+    $sumaFactura = 0;
+    foreach ($users as $user) {
+        // 20 => "Alejandro"
+        // 21 => "Rigoberto"
+        // 23 => "Ronald"
+        // 24 => "Marileth de los Angeles"
+        // 25 => "Mari Laura"
+        // 26 => "Mario josue"
+        // 27 => "Danilo Marcelino"
+        // 28 => "Ivan del Socorro"
+        // 29 => "Alexander Julio"
+        // 30 => "Dennis Octavio"
+        // 31 => "José Heriberto"
+        // 32 => "Kevin Francisco"
+
+        if (!in_array($user->id, [20, 21, 23, 25, 32])) {
+            $responsequery = CalcularIncentivo($request, $user->id);
+            $sumaRecuperacion += (float) $responsequery['porcentaje5'];
+
+            $dataVendedor = [];
+            $dataVendedor["nombreCompleto"]  = "$user->name $user->apellido";
+            $dataVendedor["idUser"] = $user->id;
+            $dataVendedor["porcentajeRecuperacion5"] = (float) $responsequery['porcentaje5'];
+            $dataVendedor["totalRecuperacion"] = (float) $responsequery['total'];
+
+            // array_push($response, $responsequery);
+
+            $facturasStorage = Factura::select("*")
+                ->where('user_id', $user->id)
+                ->where('status', 1);
+
+            if (!$request->allDates) {
+                $facturasStorage = $facturasStorage->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+            }
+
+            $facturas = $facturasStorage->get();
+
+            if (count($facturas) > 0) {
+                $totalFacturas = 0;
+                foreach ($facturas as $factura) {
+                    $totalFacturas += (float) number_format((float) ($factura->monto), 2, ".", "");
+                }
+
+                $dataVendedor["totalFacturaVendedor"]  = (float) number_format($totalFacturas, 2, ".", "");
+                $sumaFactura += $dataVendedor["totalFacturaVendedor"];
+            } else {
+                $dataVendedor["totalFacturaVendedor"]  = 0;
+            }
+            array_push($response["dataVendedores"], $dataVendedor);
+        }
+    }
+
+    $response["totalRecuperacionVendedores"] = (float) number_format($sumaRecuperacion, 2, ".", "");
+    $response["totalFacturaVendedores"] = (float) number_format($sumaFactura, 2, ".", "");
+    $response["totalFacturaVendedores2Porciento"] = (float) number_format($response["totalFacturaVendedores"] * 0.02, 2, ".", "");
+
+    // $response["totalFacturas"] = number_format($totalFacturas, 2, ".", "");
+    // $response["totalFacturasX02"] = number_format($totalFacturas * 0.02, 2, ".", "");;
+    // $response["factura"] = $facturas;
+
+    return $response;
+}
+
+function incentivosQuery($request)
+{
+    $response = [
+        'recibo' => [],
+        'total_contado' => 0,
+        'total_credito' => 0,
+        'porcentaje20' => 0,
+        'total' => 0,
+    ];
+
+    $userId = $request['userId'];
+    if (empty($request->dateIni)) {
+        $dateIni = Carbon::now();
+    } else {
+        $dateIni = Carbon::parse($request->dateIni);
+    }
+
+    if (empty($request->dateFin)) {
+        $dateFin = Carbon::now();
+    } else {
+        $dateFin = Carbon::parse($request->dateFin);
+    }
+
+    // DB::enableQueryLog();
+    $reciboStore = Recibo::select("*")
+        ->where('estado', 1)
+        ->where('user_id', $userId);
+
+    $recibo = $reciboStore->first();
+
+    // $query = DB::getQueryLog();
+    // print_r(json_encode($recibos));
+
+    if ($recibo) {
+
+        $recibo->user;
+
+        //temporal
+        $reciboHistorial = $recibo->recibo_historial()->where([
+            ['estado', '=', 1],
+        ])
+            ->orderBy('created_at', 'desc');
+        // print(count($reciboHistorial->get()));
+
+        if (!$request->allDates) {
+            $reciboHistorial = $reciboHistorial->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        }
+
+        if (!$request->allNumber) {
+            if ($request->numRecibo != 0) {
+                $reciboHistorial = $reciboHistorial->where('numero', '>=', $request->numRecibo);
+            }
+        }
+
+        $recibo->recibo_historial = $reciboHistorial->get();
+
+        if (count($recibo->recibo_historial) > 0) {
+            foreach ($recibo->recibo_historial as $recibo_historial) {
+                // print_r(json_encode($recibo_historial));
+
+                $recibo_historial->factura_historial = $recibo_historial->factura_historial()->where([
+                    ['estado', '=', 1],
+                ])->first(); // traigo los abonos de facturas de tipo credito
+
+                $recibo_historial->factura_historial->cliente;
+                $recibo_historial->factura_historial->metodo_pago;
+
+                if ($recibo_historial->factura_historial->metodo_pago) {
+                    $recibo_historial->factura_historial->metodo_pago->tipoPago = $recibo_historial->factura_historial->metodo_pago->getTipoPago();
+                }
+
+                if ($recibo_historial->factura_historial) {
+                    $response["total_contado"] += $recibo_historial->factura_historial->precio;
+                }
+            }
+        }
+
+        ///////////////// Contado (factura) /////////////////////////////
+
+        $recibo_historial_contado = $recibo->recibo_historial_contado()->where([
+            ['estado', '=', 1],
+        ]);
+
+        if (!$request->allDates) {
+            $recibo_historial_contado = $recibo_historial_contado->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        }
+
+        if (!$request->allNumber) {
+            if ($request->numRecibo != 0) {
+                $recibo_historial_contado = $recibo_historial_contado->where('numero', '>=', $request->numRecibo);
+            }
+        }
+
+        if (!$request->allNumber) {
+            if ($request->numDesde != 0 && $request->numHasta != 0) {
+                $recibo_historial_contado = $recibo_historial_contado->whereBetween('numero', [$request->numDesde, $request->numHasta]);
+            } else if ($request->numDesde != 0) {
+                $recibo_historial_contado = $recibo_historial_contado->where('numero', '=', $request->numDesde);
+            }
+        }
+
+        $recibo->recibo_historial_contado = $recibo_historial_contado->get();
+
+        if (count($recibo->recibo_historial_contado) > 0) {
+            foreach ($recibo->recibo_historial_contado as  $recibo_historial_contado) {
+                $recibo_historial_contado->factura = $recibo_historial_contado->factura()->where([
+                    ['status', '=', 1],
+                ])->first(); // traigo las facturas contado //monto
+
+                $recibo_historial_contado->factura->cliente;
+
+                if ($recibo_historial_contado->factura) {
+                    $response["total_credito"] += $recibo_historial_contado->factura->monto;
+                }
+            }
+        }
+
+
+
+        $response["total_credito"] = number_format($response["total_credito"], 2, ".", "");
+        $response["total_contado"] = number_format($response["total_contado"], 2, ".", "");
+        $response["total"]         = number_format($response["total_contado"] + $response["total_credito"], 2, ".", "");
+        $response["porcentaje20"]  = number_format($response["total"] * 0.20, 2, ".", "");
+
+        $response["recibo"]        = $recibo;
+    }
+    return $response;
+}
+
 function crearMetaRecuperacionMensualCuotas()
 {
     // La meta de recuperacion no es lo mismo que META. Es solo para la seccion de recuperacion
@@ -1174,6 +1387,131 @@ function productosVendidos($request)
     // $response = $facturas;
     $response["totalProductos"] = $contadorProductos;
     // $response["id"] = $idProductos;
+
+    return $response;
+}
+
+
+function CalcularIncentivo($request, $userId)
+{
+    $response = [
+        'recibo' => [],
+        'total_contado' => 0,
+        'total_credito' => 0,
+        'porcentaje5' => 0,
+        'total' => 0,
+    ];
+
+    if (empty($request->dateIni)) {
+        $dateIni = Carbon::now();
+    } else {
+        $dateIni = Carbon::parse($request->dateIni);
+    }
+
+    if (empty($request->dateFin)) {
+        $dateFin = Carbon::now();
+    } else {
+        $dateFin = Carbon::parse($request->dateFin);
+    }
+
+    // DB::enableQueryLog();
+    $reciboStore = Recibo::select("*")
+        ->where('estado', 1)
+        ->where('user_id', $userId);
+
+    $recibo = $reciboStore->first();
+
+    if ($recibo) {
+
+        $recibo->user;
+
+        //temporal
+        $reciboHistorial = $recibo->recibo_historial()->where([
+            ['estado', '=', 1],
+        ])
+            ->orderBy('created_at', 'desc');
+        // print(count($reciboHistorial->get()));
+
+        if (!$request->allDates) {
+            $reciboHistorial = $reciboHistorial->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        }
+
+        if (!$request->allNumber) {
+            if ($request->numRecibo != 0) {
+                $reciboHistorial = $reciboHistorial->where('numero', '>=', $request->numRecibo);
+            }
+        }
+
+        $recibo->recibo_historial = $reciboHistorial->get();
+
+        if (count($recibo->recibo_historial) > 0) {
+            foreach ($recibo->recibo_historial as $recibo_historial) {
+                // print_r(json_encode($recibo_historial));
+
+                $recibo_historial->factura_historial = $recibo_historial->factura_historial()->where([
+                    ['estado', '=', 1],
+                ])->first(); // traigo los abonos de facturas de tipo credito
+
+                $recibo_historial->factura_historial->cliente;
+                $recibo_historial->factura_historial->metodo_pago;
+
+                if ($recibo_historial->factura_historial->metodo_pago) {
+                    $recibo_historial->factura_historial->metodo_pago->tipoPago = $recibo_historial->factura_historial->metodo_pago->getTipoPago();
+                }
+
+                if ($recibo_historial->factura_historial) {
+                    $response["total_contado"] += $recibo_historial->factura_historial->precio;
+                }
+            }
+        }
+
+        ///////////////// Contado (factura) /////////////////////////////
+
+        $recibo_historial_contado = $recibo->recibo_historial_contado()->where([
+            ['estado', '=', 1],
+        ]);
+
+        if (!$request->allDates) {
+            $recibo_historial_contado = $recibo_historial_contado->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        }
+
+        if (!$request->allNumber) {
+            if ($request->numRecibo != 0) {
+                $recibo_historial_contado = $recibo_historial_contado->where('numero', '>=', $request->numRecibo);
+            }
+        }
+
+        if (!$request->allNumber) {
+            if ($request->numDesde != 0 && $request->numHasta != 0) {
+                $recibo_historial_contado = $recibo_historial_contado->whereBetween('numero', [$request->numDesde, $request->numHasta]);
+            } else if ($request->numDesde != 0) {
+                $recibo_historial_contado = $recibo_historial_contado->where('numero', '=', $request->numDesde);
+            }
+        }
+
+        $recibo->recibo_historial_contado = $recibo_historial_contado->get();
+
+        if (count($recibo->recibo_historial_contado) > 0) {
+            foreach ($recibo->recibo_historial_contado as  $recibo_historial_contado) {
+                $recibo_historial_contado->factura = $recibo_historial_contado->factura()->where([
+                    ['status', '=', 1],
+                ])->first(); // traigo las facturas contado //monto
+
+                $recibo_historial_contado->factura->cliente;
+
+                if ($recibo_historial_contado->factura) {
+                    $response["total_credito"] += $recibo_historial_contado->factura->monto;
+                }
+            }
+        }
+
+        $response["total_credito"] = number_format($response["total_credito"], 2, ".", "");
+        $response["total_contado"] = number_format($response["total_contado"], 2, ".", "");
+        $response["total"]         = number_format($response["total_contado"] + $response["total_credito"], 2, ".", "");
+        $response["porcentaje5"]  = number_format($response["total"] * 0.05, 2, ".", "");
+
+        $response["recibo"]        = $recibo;
+    }
 
     return $response;
 }

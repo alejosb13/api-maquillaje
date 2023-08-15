@@ -24,6 +24,12 @@ class CreateUsersTable extends Migration
             $table->rememberToken();
             $table->integer("estado")->length(1);
             $table->timestamps();
+            $table->string("cedula",22)->nullable(); //14 sin guiones
+            $table->unsignedBigInteger("celular")->length(13)->nullable();
+            $table->string('domicilio',180)->nullable();
+            // $table->string("direccion_negocio",180)->nullable();
+            $table->timestamp('fecha_nacimiento')->nullable();
+            $table->timestamp('fecha_ingreso')->nullable();
         });
     }
 

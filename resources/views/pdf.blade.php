@@ -133,7 +133,7 @@
                 <span><b>Fecha vencimiento:</b> {{ date("d/m/Y", strtotime($data->fecha_vencimiento)) }}</span>
                 <span><b>Tipo Operacion:</b> {{ ($data->tipo_venta == 1)? 'Credito' : 'Contado'}}</span>
                 <span><b>Estado:</b> {{ ($data->status_pagado == 0)? 'En proceso' : 'Finalizado'}}</span>
-                <span><b>Vendedor:</b> {{ $data->user_data->name .' '. $data->user_data->apellido }}</span>
+                <!-- <span><b>Vendedor:</b> {{ $data->user_data->name .' '. $data->user_data->apellido }}</span> -->
             </div>
         </div>
 

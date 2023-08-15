@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Maatwebsite\Excel\Facades\Excel;
+use Spatie\Permission\Models\Role;
 
 class PdfController extends Controller
 {
@@ -313,6 +314,49 @@ class PdfController extends Controller
 
 
         return $archivo->download('inventario_producto.pdf');
+    }
+
+    public function productosVendidosUsuario(Request $request)
+    {
+        $user = User::select("*")
+            // ->where('estado', 1)
+            ->where('id', $request->userId)
+            ->first();
+
+        $dataQuery = productosVendidosPorUsuario($user, $request);
+        $data['productos'] = array_chunk(json_decode(json_encode($dataQuery['productos'])), 34);
+        $data['user'] = $dataQuery['user'];
+
+        // $model_has_roles = DB::table('model_has_roles')->where('model_id', $user->id)->first();
+        // $role = Role::find($request['role_id']);
+        // if ($model_has_roles->role_id == 4) {
+            // $dataQueryIncentivos = incentivoSupervisorQuery($request);
+        // } else {
+            $dataQueryIncentivos = incentivosQuery($request);
+        // }
+
+        // dd(json_encode($dataQueryIncentivos));
+        // dd($request->all());
+        // dd(json_encode($dataQueryIncentivos["porcentaje20"]));
+        // dd(json_encode($dataQuery['productos']));
+        // dd(json_encode( $dataQuery['user']));
+        $data['incentivos'] = $dataQueryIncentivos["porcentaje20"];
+
+
+        // $data = [
+        //     'data' => $data['productos'],
+        //     'total' => $dataQuery['totalProductos']
+        // ];
+        // // dd(json_encode($data));
+
+
+        $archivo = PDF::loadView('ventas_productos', $data);
+        $pdf = PDF::loadView('ventas_productos', $data)->output();
+
+        Storage::disk('public')->put('ventas_productos.pdf', $pdf);
+
+
+        return $archivo->download('ventas_productos.pdf');
     }
 
     public function registro_cliente(Request $request)

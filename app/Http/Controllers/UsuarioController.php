@@ -80,6 +80,11 @@ class UsuarioController extends Controller
             'cargo' => 'required|string|max:255',
             'estado' => 'required|numeric|max:1',
             'role' => 'required|numeric',
+            'cedula' => 'required|numeric',
+            'celular' => 'required|numeric|unique:users,celular',
+            'domicilio' => 'required|string|max:180',
+            'fecha_nacimiento' => 'required|date',
+            'fecha_ingreso' => 'required|date',
         ]);
 
         if($validation->fails()) {
@@ -91,7 +96,12 @@ class UsuarioController extends Controller
                 'email' => $request['email'],
                 'apellido' => $request['apellido'],
                 'cargo' => $request['cargo'],
-                'estado' => $request['estado']
+                'estado' => $request['estado'],
+                'cedula' => $request['cedula'],
+                'celular' => $request['celular'],
+                'domicilio' => $request['domicilio'],
+                'fecha_nacimiento' => $request['fecha_nacimiento'],
+                'fecha_ingreso' => $request['fecha_ingreso'],
             ]);
             $role = Role::find($request['role']);
             // dd($user);
@@ -146,7 +156,7 @@ class UsuarioController extends Controller
                 $usuario->clientes;
                 $usuario->factura;
                 $usuario->role_id = $role_id->role_id;
-                $usuario->recibo;
+                // $usuario->recibo;
                 $usuario->recibo;
 
                 $response = $usuario;
@@ -192,6 +202,11 @@ class UsuarioController extends Controller
                     'cargo' => 'required|string|max:255',
                     'estado' => 'required|numeric|max:1',
                     'role' => 'required|numeric',
+                    'cedula' => 'required|numeric',
+                    'celular' => 'required|numeric|unique:users,celular,'.$id,
+                    'domicilio' => 'required|string|max:180',
+                    'fecha_nacimiento' => 'required|date',
+                    'fecha_ingreso' => 'required|date',
                 ]);
 
                 if($validation->fails()) {
@@ -205,7 +220,12 @@ class UsuarioController extends Controller
                         'email' => $request['email'],
                         'apellido' => $request['apellido'],
                         'cargo' => $request['cargo'],
-                        'estado' => $request['estado']
+                        'estado' => $request['estado'],
+                        'cedula' => $request['cedula'],
+                        'celular' => $request['celular'],
+                        'domicilio' => $request['domicilio'],
+                        'fecha_nacimiento' => $request['fecha_nacimiento'],
+                        'fecha_ingreso' => $request['fecha_ingreso'],
                     ]);
 
                     DB::table('model_has_roles')->where('model_id', $usuario->id)->delete();

@@ -24,6 +24,12 @@ class User extends Authenticatable
         'cargo',
         'email',
         'password',
+        'cedula',
+        'celular',
+        'domicilio',
+        'direccion_negocio',
+        'fecha_nacimiento',
+        'fecha_ingreso',
         'estado',
     ];
 

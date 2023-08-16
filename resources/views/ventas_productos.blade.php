@@ -49,7 +49,7 @@
         width: 100%;
         margin-top: 15px;
         border-bottom: 2px solid #000;
-        padding-bottom: 40px
+        padding-bottom: 20px
     }
 
     .left {
@@ -87,9 +87,11 @@
 
     .footer {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         margin-top: 75px;
-        width: 100%
+        width: 100%;
+        text-align: center;
+
     }
 
     .firmas {
@@ -201,9 +203,6 @@
 
         <div class="firmas">
             <span>Firma Entrega</span>
-        </div>
-        <div class="firmas">
-            <span>Firma Vendedor</span>
         </div>
         <div class="firmas">
             <span>Firma Recibo</span>

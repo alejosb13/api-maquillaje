@@ -140,9 +140,8 @@ class LogisticaController extends Controller
         // ])->get();
 
         foreach ($users as $user) {
-            // dd($user->id);
-            // $user->meta;
-            // $responsequery = recuperacionQuery($user);
+            $role_id = DB::table('model_has_roles')->where('model_id', $user->id)->first();
+            $user->role_id = $role_id->role_id;
             $responsequery = productosVendidosPorUsuario($user, $request);
 
             array_push($response, $responsequery);
@@ -150,11 +149,11 @@ class LogisticaController extends Controller
         return response()->json($response, 200);
     }
 
-    function clientesReactivadosQuery(Request $request)
+    function clientesReactivadosQuery($request)
     {
         $response = [];
 
-        $userId = $request['userId'];
+        $userId = $request->userId;
 
         if (empty($request->dateIni)) {
             $dateIni = Carbon::now();
@@ -197,7 +196,7 @@ class LogisticaController extends Controller
         return $response;
     }
 
-    function clientesInactivosQuery(Request $request)
+    function clientesInactivosQuery($request)
     {
         $response = [];
 
@@ -260,7 +259,7 @@ class LogisticaController extends Controller
         return $response;
     }
 
-    function clienteNuevo(Request $request)
+    function clienteNuevo($request)
     {
         $response = [];
 
@@ -319,13 +318,13 @@ class LogisticaController extends Controller
         return $response;
     }
 
-    function mora60_90Query(Request $request)
+    function mora60_90Query($request)
     {
         $response = [
             'factura' => [],
         ];
 
-        $userId = $request['userId'];
+        $userId = $request->userId;
         $fechaActual = Carbon::now();
 
         if ($request->allUsers) {
@@ -372,12 +371,12 @@ class LogisticaController extends Controller
         return $response;
     }
 
-    function mora30_60Query(Request $request)
+    function mora30_60Query($request)
     {
         $response = [
             'factura' => [],
         ];
-        $userId = $request['userId'];
+        $userId = $request->userId;
         $fechaActual = Carbon::now();
 
         if ($request->allUsers) {
@@ -589,7 +588,7 @@ class LogisticaController extends Controller
         $response["recuperacionMensual"] = newrecuperacionQuery($user, $request->dateIni, $request->dateFin);
         $response["cartera"] = carteraQuery($request);
         $response["recuperacion"] = $this->RecuperacionRecibosMensualQuery($request);
-        
+
 
         $response["clientesNuevos"] = $this->clienteNuevo($request);
         $response["incentivos"] = incentivosQuery($request);
@@ -598,6 +597,133 @@ class LogisticaController extends Controller
         $response["clientesReactivados"] = $this->clientesReactivadosQuery($request);
         $response["ventasMeta"] = ventasMetaQuery($request);
         $response["productosVendidos"] = productosVendidosPorUsuario($user, $request);
+
+        return response()->json($response, 200);
+    }
+
+    function resumenDashboardAdmin(Request $request)
+    {
+        $response = [];
+
+        $user = User::where([
+            ["estado", "=", 1],
+            ["id", "=", $request->userId]
+        ])->first();
+
+
+        // Recuperacion mensual
+        $users = User::where([
+            ["estado", "=", 1]
+        ])->get();
+
+        $totalMetas = 0;
+        $totalAbonos = 0;
+        $contadorUsers = 0;
+        foreach ($users as $usuario) {
+            $responserNewrecuperacionQuery = newrecuperacionQuery($usuario, $request->dateIni, $request->dateFin);
+
+            if ($responserNewrecuperacionQuery["recuperacionTotal"] > 0) {
+                $totalMetas += $responserNewrecuperacionQuery["recuperacionTotal"];
+                $totalAbonos += $responserNewrecuperacionQuery["abonosTotalLastMount"];
+                $contadorUsers++;
+            }
+        }
+
+        $response["recuperacionMensual"] = [
+            "abonosTotalLastMount" => $totalAbonos,
+            "recuperacionTotal" => $totalMetas,
+            "contadorUsers" => $contadorUsers,
+            "recuperacionPorcentaje" => decimal(($totalAbonos / $totalMetas) * 100),
+        ];
+        // Fin Recuperacion mensual
+
+        $response["recuperacion"] = $this->RecuperacionRecibosMensualQuery($request);
+
+        $response["incentivosSupervisor"] = incentivoSupervisorQuery($request);
+
+        // productos Vendidos 
+        $usersActive = User::where([
+            ["estado", "=", 1]
+        ])->get();
+
+        $contadorProductosVendidos = 0;
+        foreach ($usersActive as $user) {
+            $responseProductosVendidosPorUsuario = productosVendidosPorUsuario($user, $request);
+            $contadorProductosVendidos += $responseProductosVendidosPorUsuario["totalProductos"];
+        }
+
+        $response["productosVendidos"] = ["totalProductos" => $contadorProductosVendidos];
+        // Fin productos Vendidos 
+
+        $dataRequest = (object) [
+            "allDates" => false,
+            "dateFin" => $request->dateFin,
+            "dateIni" => $request->dateIni,
+            "status_pagado" => 0,
+            "userId" => 0,
+            "allNumber" => true,
+            'allUsers' => false,
+        ];
+
+        $response["clientesNuevos"] = $this->clienteNuevo($dataRequest);
+        $response["clientesInactivos"] = $this->clientesInactivosQuery($dataRequest);
+        $response["clientesReactivados"] = $this->clientesReactivadosQuery($dataRequest);
+
+        // Cartera y ventas
+        $contadorCartera = 0;
+        $contadorVentas = [
+            "total" => 0,
+            "meta_monto" => 0,
+            "meta" => 0,
+        ];
+
+        $contadorIncentivos = [
+            "porcentaje20" => 0,
+            "total" => 0,
+        ];
+        $mora30_60List = [];
+        $mora60_90List = [];
+        foreach ($usersActive as $user) {
+            $dataRequest->userId = $user->id;
+
+            $responseCarteraQuery = carteraQuery($dataRequest);
+            $contadorCartera += $responseCarteraQuery["total"];
+
+            $responseVentasMetaQuery = ventasMetaQuery($dataRequest);
+            if (!in_array($user->id, [20, 21, 23, 24, 32])) {
+                $contadorVentas["meta_monto"] += $responseVentasMetaQuery["meta_monto"];
+                $contadorVentas["total"] += $responseVentasMetaQuery["total"];
+            }
+
+            $responseIncentivo = incentivosQuery($dataRequest);
+            if (!in_array($user->id, [20, 21, 23, 24, 25, 32])) {
+                $contadorIncentivos["total"] += $responseIncentivo["total"];
+            }
+
+            $mora30_60List = $this->mora30_60Query($dataRequest)["factura"];
+            if (count($mora30_60List) > 0) {
+                foreach ($mora30_60List as  $mora30_60) {
+                    $response["mora30_60"]["factura"][] = $mora30_60;
+                }
+            }
+
+            $mora60_90List = $this->mora60_90Query($dataRequest)["factura"];
+            if (count($mora60_90List) > 0) {
+                foreach ($mora60_90List as  $mora60_90) {
+                    $response["mora60_90"]["factura"][] = $mora60_90;
+                }
+            }
+        }
+
+        $response["cartera"] = ["total" => $contadorCartera];
+
+        $contadorVentas["meta"] = decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
+        $response["ventasMeta"] = $contadorVentas;
+
+        // Fin Cartera y ventas 
+
+        $contadorIncentivos["porcentaje20"] = decimal($contadorIncentivos["total"] * 0.20);
+        $response["incentivos"] = $contadorIncentivos;
 
         return response()->json($response, 200);
     }

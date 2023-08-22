@@ -426,7 +426,7 @@ function carteraQuery($request)
         'abonos' => [],
     ];
 
-    $userId = $request['userId'];
+    $userId = $request->userId;
     // "dateIni": "2022-03-15",
     // "dateFin": "2022-03-15",
     if (empty($request->dateIni)) {
@@ -548,7 +548,7 @@ function ventasMetaQuery($request)
     ];
 
     $metaValue = 0;
-    $userId = $request['userId'];
+    $userId = $request->userId;
 
     // "dateIni": "2022-03-15",
     // "dateFin": "2022-03-15",
@@ -727,7 +727,7 @@ function newrecuperacionQuery($user, $dateini, $dateFin)
     return $response;
 }
 
-function productosVendidosPorUsuario($user, $request)
+function productosVendidosPorUsuario($user, $request, $allUsers = false)
 {
     $id = $user->id;
     $response = [
@@ -758,7 +758,10 @@ function productosVendidosPorUsuario($user, $request)
         $facturasStorage = $facturasStorage->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
     }
 
-    $facturasStorage = $facturasStorage->where('user_id', $id);
+    if (!$allUsers) {
+        $facturasStorage = $facturasStorage->where('user_id', $id);
+    }
+
 
     $facturas = $facturasStorage->get();
     foreach ($facturas as $factura) {
@@ -949,7 +952,7 @@ function incentivosQuery($request)
         'total' => 0,
     ];
 
-    $userId = $request['userId'];
+    $userId = $request->userId;
     if (empty($request->dateIni)) {
         $dateIni = Carbon::now();
     } else {

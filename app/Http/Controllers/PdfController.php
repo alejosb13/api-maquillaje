@@ -330,9 +330,9 @@ class PdfController extends Controller
         // $model_has_roles = DB::table('model_has_roles')->where('model_id', $user->id)->first();
         // $role = Role::find($request['role_id']);
         // if ($model_has_roles->role_id == 4) {
-            // $dataQueryIncentivos = incentivoSupervisorQuery($request);
+        // $dataQueryIncentivos = incentivoSupervisorQuery($request);
         // } else {
-            $dataQueryIncentivos = incentivosQuery($request);
+        $dataQueryIncentivos = incentivosQuery($request);
         // }
 
         // dd(json_encode($dataQueryIncentivos));
@@ -357,6 +357,36 @@ class PdfController extends Controller
 
 
         return $archivo->download('ventas_productos.pdf');
+    }
+
+    public function productosVendidosSupervisor(Request $request)
+    {
+        // $users = User::where([
+        //     ["estado", "=", 1]
+        // ])->get();
+        $user = User::select("*")
+            // ->where('estado', 1)
+            ->where('id', $request->userId)
+            ->first();
+
+        $responsequery = productosVendidosPorUsuario($user, $request, true);
+        // dd(json_encode($responsequery));
+
+        $data['productos'] = array_chunk(json_decode(json_encode($responsequery['productos'])), 34);
+        $data['user'] = $user;
+
+        $dataQueryIncentivos = incentivoSupervisorQuery($request);
+        
+
+        $data['incentivos'] = $dataQueryIncentivos["totalFacturaVendedores2Porciento"] + $dataQueryIncentivos["totalRecuperacionVendedores"];
+
+        $archivo = PDF::loadView('ventas_productos_supervisor', $data);
+        $pdf = PDF::loadView('ventas_productos_supervisor', $data)->output();
+
+        Storage::disk('public')->put('ventas_productos_supervisor.pdf', $pdf);
+
+
+        return $archivo->download('ventas_productos_supervisor.pdf');
     }
 
     public function registro_cliente(Request $request)

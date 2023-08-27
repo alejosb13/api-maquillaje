@@ -153,28 +153,38 @@ class FacturaController extends Controller
                 ['estado', '=', 1]
             ])->first();
 
-            // verifico si el cliente esta en lista negra
-            if ($cliente->categoria->tipo == "LN") {
-                return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos. "], 400);
-            }
+            // $user = User::where([
+            //     ["estado", "=", 1],
+            //     ["id", "=", $request->userId]
+            // ])->first();
+            // dd(json_encode($request['user_id']));
+            $model_has_roles = DB::table('model_has_roles')->where('model_id', $request['user_id'])->first(); // traigo el rol
+            // dd(json_encode($model_has_roles));
+            if ($model_has_roles->role_id != 2) { // si no es admin que valide lista negra
+                // verifico si el cliente esta en lista negra
+                if ($cliente->categoria->tipo == "LN") {
+                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos. "], 400);
+                }
 
-            if (count($facturasMora60_90) > 0) {
-                foreach ($facturasMora60_90 as $facturaMora60_90) { // valido todas sus facturas, para ver si tiene una en mora
-                    $fechaPasado60DiasVencimiento = Carbon::parse($facturaMora60_90->created_at)->addDays(60)->toDateTimeString();
+                if (count($facturasMora60_90) > 0) {
+                    foreach ($facturasMora60_90 as $facturaMora60_90) { // valido todas sus facturas, para ver si tiene una en mora
+                        $fechaPasado60DiasVencimiento = Carbon::parse($facturaMora60_90->created_at)->addDays(60)->toDateTimeString();
+                        
+                        if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaHoy) >= 60) {
+                            $categoriaListaNegra =  Categoria::where([
+                                ['tipo', '=', "LN"],
+                                ['estado', '=', 1]
+                            ])->first();
 
-                    if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaHoy) >= 60) {
-                        $categoriaListaNegra =  Categoria::where([
-                            ['tipo', '=', "LN"],
-                            ['estado', '=', 1]
-                        ])->first();
+                            $cliente->categoria_id = $categoriaListaNegra->id; // agrego a lista negra por estas en mora de 60 dias o mas
+                            $cliente->save();
 
-                        $cliente->categoria_id = $categoriaListaNegra->id; // agrego a lista negra por estas en mora de 60 dias o mas
-                        $cliente->save();
-
-                        return response()->json(["mensaje" => "Este cliente posee alguna factura en mora de 60-90 dias", "cliente" => $cliente], 400);
+                            return response()->json(["mensaje" => "Este cliente posee alguna factura en mora de 60-90 dias", "cliente" => $cliente], 400);
+                        }
                     }
                 }
             }
+
 
             $montoSaldoPorAcumular = $request['monto'] + $FacturasxClientexSinPagar;
             if ($cliente->categoria->condicion == 1) { // mayor que

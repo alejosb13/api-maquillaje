@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthenticationController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DevolucionFacturaController;
 use App\Http\Controllers\DevolucionProductoController;
 use App\Http\Controllers\FacturaController;
@@ -107,7 +108,8 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::post('logistica/productos-vendidos', [LogisticaController::class, 'productosVendidos']);
     Route::post('logistica/resumen-dashboard', [LogisticaController::class, 'resumenDashboard']);
     Route::post('logistica/resumen-dashboard-admin', [LogisticaController::class, 'resumenDashboardAdmin']);
-
+    
+    Route::get('resumen/dashboard/user/{id}', [DashboardController::class, 'show']);
 
     Route::get('cliente/factura/{id}',  [ClienteController::class, 'clienteToFactura']);
     Route::get('cliente/abono/{id}',  [ClienteController::class, 'calcularAbono']);
@@ -153,7 +155,8 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::resource('regalos', RegalosController::class);
 
 
-    Route::post('configuracion/migracion', [ConfiguracionController::class, 'migracion']);
+    // Route::post('configuracion/migracion', [ConfiguracionController::class, 'migracion']);
+    Route::post('configuracion/migracion', [ConfiguracionController::class, 'migracionNew']);
     Route::post('configuracion/taza-cambio', [ConfiguracionController::class, 'saveTazaCambio']);
     Route::get('configuracion/taza-cambio', [ConfiguracionController::class, 'getTazaCambio']);
     Route::get('configuracion/cierre', [ConfiguracionController::class, 'getCierraConfig']);
@@ -173,8 +176,12 @@ Route::get('list/clientes', [ListadosPaginasController::class, 'clientesList']);
 Route::get('list/productos-clientes', [ListadosPaginasController::class, 'FacturaDetailClientList']);
 
 Route::get('configuracion/crons', function () {
-    // Artisan::call('meta:recuperacion');
+    Artisan::call('meta:recuperacion');
     // echo Artisan::output();
+});
+Route::get('configuracion/crons-5-min', function () {
+    Artisan::call('save:indice');
+    echo Artisan::output();
 });
 Route::get('configuracion/clear-cache', function () {
     echo Artisan::call('config:clear');

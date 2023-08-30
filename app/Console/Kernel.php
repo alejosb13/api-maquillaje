@@ -9,6 +9,7 @@ class Kernel extends ConsoleKernel
 {
     protected $commands = [
         Commands\MetaRecuperacionCron::class,
+        Commands\SaveIndicesDashboardCron::class,
     ];
 
     /**
@@ -21,6 +22,9 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('meta:recuperacion')->monthly();
         $schedule->command('sanctum:prune-expired --hours=24')->daily();
+        $schedule->command('save:indice')->everyFiveMinutes();
+
+        // $schedule->command('save:indice')->everyMinute();
     }
 
     /**

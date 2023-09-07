@@ -108,10 +108,9 @@
     }
 
     .logo {
-        /* position: absolute; */
         float: left;
         display: block;
-        width: 70px;
+        width: 90px;
         height: 70px;
         z-index: 9999;
     }

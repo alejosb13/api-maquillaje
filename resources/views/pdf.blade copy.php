@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,154 +7,117 @@
     <title>pdf</title>
 </head>
 <style>
-    body {
+    body{
         position: relative;
     }
-
-    .content-titulo {
+    .content-titulo{
         display: flex;
         flex-direction: column;
         text-align: center;
         margin-left: -40px;
     }
-
-    h4 {
+    h4{
         line-height: 1;
     }
-
-    .border {
-        width: 98%;
+    .border{
+        width: 95%;
         display: block;
-        height: 88%;
+        height: 70%;
         border: 2px solid #000;
         border-top-left-radius: 30px;
         border-top-right-radius: 30px;
-        padding: 10px;
+        padding: 10px
     }
-
-    .border-total {
-        width: 98%;
-        display: block;
-        height: 75%;
-        border: 2px solid #000;
-        border-top-left-radius: 30px;
-        border-top-right-radius: 30px;
-        padding: 10px;
-    }
-
-    .seccion_supeior {
+    .seccion_supeior{
         display: flex;
         justify-content: space-between;
         width: 100%;
         margin-top: 15px;
         border-bottom: 2px solid #000;
-        padding-bottom: 20px
+        padding-bottom: 15px
     }
-
-    .left {
+    .left{
         display: inline-block;
     }
-
-    .left span {
+    .left span{
         display: block;
 
     }
-
-    .right {
+    .right{
         display: inline-block;
         float: right;
     }
-
-    .right span {
+    .right span{
         display: block;
         width: 220px;
     }
-
-    .detail {
+    .detail{
         width: 100%;
         margin: 5px;
     }
-
-    .detail table th {
+    .detail table th{
         text-align: left;
-        border-bottom: 1px solid
     }
-
-    .detail table td {
-        font-size: 12px;
+    .detail table td{
+        font-size: 11;
     }
-
-    .footer {
+    .footer{
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         margin-top: 75px;
-        width: 100%;
-        text-align: center;
-
+        width: 100%
     }
 
-    .firmas {
+    .firmas{
         width: 150px;
         display: inline-block;
         border-top: 1px solid #000;
         margin: 0 40px;
         text-align: center;
     }
-
-    .firmas span {
+    .firmas span{
         display: block;
         font-size: 15px
     }
-
-    .logo {
+    .logo{
+        position: absolute;
         float: left;
         display: block;
         width: 90px;
         height: 70px;
-        z-index: 9999;
     }
-
-    .total {
+    .total{
         display: block;
-        width: 98%;
+        width: 95%;
         border: 2px solid #000;
         border-bottom-left-radius: 30px;
         border-bottom-right-radius: 30px;
         padding: 10px
     }
-
-    .total .monto {
+    .total .monto{
         float: right;
     }
-
-    .item {
+    .item{
         display: block;
         width: 95%;
         border: 2px solid #000;
         padding: 10px
     }
-
-    .item .monto {
+    .item .monto{
         float: right;
     }
-
-    .direccion {
-        width: 300px;
-    }
-
-    .page-break {
-        page-break-after: always;
+    .direccion{
+        width: 400px;
     }
 </style>
-
 <body>
 
-    @foreach($productos as $key => $page)
-
-    <img class="logo" src="lib/img/logo_png.png" style="{{ $key > 0 ?  'margin-top: 15px' : '' }}" alt="">
-    <h5 style="text-align: center;">M&R Profesional <br> ALTAMIRA DE DONDE FUE EL BDF 1C A LAGO 1C ARRIBA CONTIGUO A ETIRROL <br> Teléfonos: 84220028-88071569-81562408</h5>
-
-    <div class="{{ ($key +1) == count($productos) ?  'border-total' : 'border' }}">
+    <img class="logo" src="lib/img/logo_png.png" alt="">
+    <div class="content-titulo">
+        {{-- <h5>IMPORTACIONES CLIO NICARAGUA <br> ALTAMIRA DE DONDE FUE EL BDF 1C A LAGO 1C ARRIBA CONTIGUO A ETIRROL <br> 81562409784214465</h5> --}}
+        <h5>M&R Profesional <br> ALTAMIRA DE DONDE FUE EL BDF 1C A LAGO 1C ARRIBA CONTIGUO A ETIRROL <br> Teléfonos: 84220028-88071569-81562408</h5>
+    </div>
+    <div class="border">
         <div class="seccion_supeior">
             <div class="left">
                 <span class="direccion"><b>Nombre Completo:</b> {{$data->cliente->nombreCompleto}}</span>
@@ -177,6 +139,7 @@
                 <!-- <span><b>Vendedor:</b> {{ $data->user_data->name .' '. $data->user_data->apellido }}</span> -->
             </div>
         </div>
+
         <div class="detail">
             <table style="width: 100%">
                 <thead>
@@ -187,35 +150,45 @@
                     </tr>
                 </thead>
                 <tbody>
-
-                    @foreach($productos[$key] as $product)
-                    @if ($product->is_gift)
+                    @foreach($data->factura_detalle as $producto)
                     <tr>
-                        <td>{{ $product->descripcion }}</td>
-                        <td>{{ ($product->cantidad_regalada > 1) ? $product->cantidad_regalada.' Uds' : $product->cantidad_regalada.' Ud' }}</td>
+                        <td>{{ $producto->descripcion }}</td>
+                        <td>{{ ($producto->cantidad > 1) ? $producto->cantidad.' Uds' : $producto->cantidad.' Ud' }}</td>
+                        <td>{{ bcdiv($producto->precio, 1, 2) }} C$</td>
+                    </tr>
+                    @endforeach
+                    @foreach($regalos as $regalo)
+                    <tr>
+                        <td>{{ $regalo->detalle_regalo->descripcion }}</td>
+                        <td>{{ ($regalo->cantidad_regalada > 1) ? $regalo->cantidad_regalada.' Uds' : $regalo->cantidad_regalada.' Ud' }}</td>
                         <td>Regalo</td>
                     </tr>
-                    @else
-                    <tr>
-                        <td>{{ $product->descripcion }}</td>
-                        <td>{{ ($product->cantidad > 1) ? $product->cantidad.' Uds' : $product->cantidad.' Ud' }}</td>
-                        <td>{{ bcdiv($product->precio, 1, 2) }} C$</td>
-                    </tr>
-                    @endif
-
                     @endforeach
+                    {{-- <tr>
+                        <td colspan="2">Total</td>
+                        <td>{{ $data->monto }}.00 C$</td>
+                    </tr> --}}
+                </tbody>
+            </table>
+            <table>
+                <tbody>
+
                 </tbody>
             </table>
         </div>
-
     </div>
-    @endforeach
-
+    <!-- <div class="item">
+        <span>Diferencia</span>
+        <span class="monto">$50.00</span>
+    </div>
+    <div class="item">
+        <span>Abonado</span>
+        <span class="monto">$105.00</span>
+    </div> -->
     <div class="total">
         <span>Total</span>
         <span class="monto">{{ bcdiv($data->monto, 1, 2) }} C$</span>
     </div>
-
     <div class="footer">
 
         <div class="firmas">
@@ -229,5 +202,4 @@
         </div>
     </div>
 </body>
-
 </html>

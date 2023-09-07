@@ -72,7 +72,7 @@ Route::get('pdf/registroclientes', [PdfController::class, 'registro_cliente']);
 Route::post('pdf/productos_vendidos_usuario', [PdfController::class, 'productosVendidosUsuario']);
 Route::post('pdf/productos_vendidos_supervisor', [PdfController::class, 'productosVendidosSupervisor']);
 Route::get('pdf/productos_vendidos', [PdfController::class, 'productosVendidos']);
-Route::get('pdf/{id}', [PdfController::class, 'facturaPago']);
+Route::get('pdf/{id}', [PdfController::class, 'facturaPagonew']);
 Route::get('pdf/estado_cuenta/{id}', [PdfController::class, 'estadoCuenta']);
 Route::post('pdf/cartera', [PdfController::class, 'cartera']);
 Route::get('pdf/productos/inventario', [PdfController::class, 'inventario']);

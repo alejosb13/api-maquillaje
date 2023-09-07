@@ -100,7 +100,7 @@ class SaveIndicesDashboardCron extends Command
                 "ventas_meta_porcentaje" => $resumen["ventasMeta"]["meta"],
                 "ventas_meta_monto" => decimal($resumen["ventasMeta"]["meta_monto"]),
                 "ventas_meta_total" => decimal($resumen["ventasMeta"]["total"]),
-                "recuperacionmensual_porcentaje" => $resumen["recuperacionMensual"]["recuperacionPorcentaje"],
+                "recuperacionmensual_porcentaje" => decimal($resumen["recuperacionMensual"]["recuperacionPorcentaje"]),
                 "recuperacionmensual_total" => decimal($resumen["recuperacionMensual"]["recuperacionTotal"]),
                 "recuperacionmensual_abonos" => decimal($resumen["recuperacionMensual"]["abonosTotalLastMount"]),
                 "recuperacion_total" => $resumen["recuperacion"]["total"],
@@ -164,7 +164,7 @@ class SaveIndicesDashboardCron extends Command
                 "ventas_meta_porcentaje" => $resumen["ventasMeta"]["meta"],
                 "ventas_meta_monto" => decimal($resumen["ventasMeta"]["meta_monto"]),
                 "ventas_meta_total" => decimal($resumen["ventasMeta"]["total"]),
-                "recuperacionmensual_porcentaje" => $resumen["recuperacionMensual"]["recuperacionPorcentaje"],
+                "recuperacionmensual_porcentaje" => decimal($resumen["recuperacionMensual"]["recuperacionPorcentaje"]),
                 "recuperacionmensual_total" => decimal($resumen["recuperacionMensual"]["recuperacionTotal"]),
                 "recuperacionmensual_abonos" => decimal($resumen["recuperacionMensual"]["abonosTotalLastMount"]),
                 "recuperacion_total" => $resumen["recuperacion"]["total"],
@@ -230,7 +230,7 @@ class SaveIndicesDashboardCron extends Command
                 "ventas_meta_porcentaje" => $resumen["ventasMeta"]["meta"],
                 "ventas_meta_monto" => decimal($resumen["ventasMeta"]["meta_monto"]),
                 "ventas_meta_total" => decimal($resumen["ventasMeta"]["total"]),
-                "recuperacionmensual_porcentaje" => $resumen["recuperacionMensual"]["recuperacionPorcentaje"],
+                "recuperacionmensual_porcentaje" => decimal($resumen["recuperacionMensual"]["recuperacionPorcentaje"]),
                 "recuperacionmensual_total" => decimal($resumen["recuperacionMensual"]["recuperacionTotal"]),
                 "recuperacionmensual_abonos" => decimal($resumen["recuperacionMensual"]["abonosTotalLastMount"]),
                 "recuperacion_total" => $resumen["recuperacion"]["total"],
@@ -364,8 +364,9 @@ class SaveIndicesDashboardCron extends Command
         $response["mora60_90"] = $this->calcularTotalSaldo($mora60_90ListTotal);
 
         $response["cartera"] = ["total" => $contadorCartera];
-
-        $contadorVentas["meta"] = decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
+        
+        $metaVentas =  $contadorVentas["meta_monto"]==0?0 : decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
+        $contadorVentas["meta"] = $metaVentas;
         $response["ventasMeta"] = $contadorVentas;
 
         // Fin Cartera y ventas 

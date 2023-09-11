@@ -82,7 +82,7 @@
     }
 
     .detail table td {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .footer {

@@ -18,7 +18,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Maatwebsite\Excel\Facades\Excel;
-use Spatie\Permission\Models\Role;
 
 class PdfController extends Controller
 {
@@ -253,7 +252,7 @@ class PdfController extends Controller
         }
 
         if (count($regaloList) > 0) {
-            $factura->factura_detalle = array_merge($factura->factura_detalle, $regaloList);
+            $factura->factura_detalle = array_merge($factura->factura_detalle, $regaloList,$factura->factura_detalle);
         }
 
         // $data['productos'] = array_chunk(json_decode(json_encode($factura->factura_detalle)), 6);
@@ -261,7 +260,7 @@ class PdfController extends Controller
 
         $data = [
             'data' =>  $factura,
-            'productos' => array_chunk(json_decode(json_encode($factura->factura_detalle)), 35),
+            'productos' => array_chunk(json_decode(json_encode($factura->factura_detalle)), 30),
         ];
 
         $archivo = PDF::loadView('pdf', $data);

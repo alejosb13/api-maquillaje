@@ -76,6 +76,6 @@ class MetaRecuperacionCron extends Command
 
         crearMetaMensual(); // Tambien aprovecho el cron de recuperacion para validar la creacion de Metas
         cambiarClientesAListaNegraFacturasMora60_90();  // Tambien aprovecho el cron de recuperacion para validar los clientes en mora y los coloco en lista negra
-
+        // Log::info('Finalizar cambiarClientesAListaNegraFacturasMora60_90');
     }
 }

@@ -51,7 +51,8 @@ function validarStatusPagadoGlobal($clienteID)
 
             if ($tieneSaldo) {
                 // print_r (json_encode( ["monto" => $factura["monto"], "totalAbonos"=>$totalAbonos ]));
-                $totalAbonos =  $totalAbonos - $factura["monto"];
+                // print_r (json_encode( ["totalAbonos" => decimal($totalAbonos) ]));
+                $totalAbonos =  decimal($totalAbonos -  $factura["monto"]);
                 // print_r (json_encode( ["monto" => $factura["monto"], "totalAbonos"=>$totalAbonos ]));
                 if ($totalAbonos < 0) { // si el precio es mas alto que el total de abonos (dejo la factura abierta y ajusto el saldo_restante)
                     $tieneSaldo = FALSE;
@@ -73,6 +74,7 @@ function validarStatusPagadoGlobal($clienteID)
                 $factura["status_pagado"] = 1;
                 $factura["status_pagado_at"] = $fechaPago;
             }
+            // print_r (json_encode( ["monto" => $factura ]));
 
             $factura->update();
         }

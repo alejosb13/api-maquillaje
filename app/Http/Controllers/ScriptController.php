@@ -62,7 +62,7 @@ class ScriptController extends Controller
         } catch (Exception $e) {
             DB::rollback();
 
-            return response()->json(["mensaje" => "Error en el Script  [validarStatusPagadoGlobal]"], 400);
+            return response()->json(["mensaje" => "Error en el Script  [validarStatusPagadoGlobal]","a"=>$e->getMessage()], 400);
         }
 
         return response()->json($response, $status);
@@ -94,13 +94,14 @@ class ScriptController extends Controller
     {
         // La meta de recuperacion no es lo mismo que META. Es solo para la seccion de recuperacion
         $inicioMesActual =  Carbon::now()->firstOfMonth()->toDateString();
-
+        $finMesActual =  Carbon::now()->lastOfMonth()->toDateString();
         // DB::enableQueryLog();
 
         // $users = User::where([
         //     ["estado", "=", 1]
         // ])->get();
 
+        $user = (object)["id" => 33];
         // foreach ($users as $user) {
         $total = 0;
 
@@ -108,7 +109,7 @@ class ScriptController extends Controller
             ->where('tipo_venta',  1) // credito 
             ->where('status_pagado', 0)
             ->where('created_at', "<", $inicioMesActual . " 00:00:00")
-            ->where('user_id', 30)
+            ->where('user_id', $user->id)
             ->where('status', 1)
             ->get();
 
@@ -143,10 +144,10 @@ class ScriptController extends Controller
 
                 // $diaMetaFin = $fecha_creacion->copy()->lastOfMonth(); // obtengo el ultimo dia del mes en el que se creo la factura
                 // $factura->diasSumaMeta = $fecha_creacion->copy()->diffInDays($diaMetaFin); // calculo cantidad de dias entre fecha de creacion y final de mes
-                
+
                 // 2 - genero una copia de la fecha de creacion para controlar el while
                 $fechaCreacionBendera = $fecha_creacion->copy();
-                
+
                 // 3 - acumulador de dias transcurridos en el while
                 $diasCobroMeta = 0;
 
@@ -164,7 +165,6 @@ class ScriptController extends Controller
                     ++$diasCobroMeta;
 
                     // $factura->ale = $fechaCreacionBendera->toDateString();
-
                 }
 
                 $factura->diasCobroMeta = $diasCobroMeta;
@@ -173,16 +173,11 @@ class ScriptController extends Controller
                 } else {
                     $factura->precioPorDia = $factura->monto / $factura->dias_vencimiento;
                 }
-                $factura->monto_pagado =  $saldo;
 
                 $precioDiasMeta = $diasCobroMeta * $factura->precioPorDia;
                 $factura->precioDiasMeta = $precioDiasMeta - $saldo;
 
                 $total += decimal($factura->precioDiasMeta);
-
-
-
-
 
                 // "6 Días"   >= 0 == 1 mes
                 // "15 Días",
@@ -194,12 +189,22 @@ class ScriptController extends Controller
         }
 
         // $resultado = $total  * 0.85;
-        $resultado = $total  * 1;
+        $resultado = $total * 1;
+
+        // $existeUsuarioMesActual = !!getMetaRecuperacionMensual($user->id, $inicioMesActual, $finMesActual);
+
+        // if (!$existeUsuarioMesActual) {
+        //     MetaRecuperacion::create([
+        //         'user_id' => $user->id,
+        //         'monto_meta' => $resultado,
+        //         'estado' => 1,
+        //     ]);
+        // }
+        // };
 
         return response()->json([
             'resultado' => $resultado,
             'facturas' => $facturas,
         ], 200);
-
     }
 }

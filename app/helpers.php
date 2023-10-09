@@ -864,7 +864,11 @@ function crearMetaRecuperacionMensual()
 
 function incentivoSupervisorQuery($request)
 {
-    $response = ["dataVendedores" => []];
+    $response = [
+        "dataVendedores" => [],
+        "totalFacturaVendedores2Porciento" => 0,
+        "totalFacturaVendedores" => 0
+    ];
     $users = User::where([
         ["estado", "=", 1]
     ])->get();
@@ -920,13 +924,23 @@ function incentivoSupervisorQuery($request)
             $facturas = $facturasStorage->get();
 
             if (count($facturas) > 0) {
-                $totalFacturas = 0;
+                $fechaNuevoPorcentaje = Carbon::parse('2023-10-9'); // fecha cambio de porcentaje a 4%
+                // $totalFacturas = 0;
                 foreach ($facturas as $factura) {
-                    $totalFacturas += (float) number_format((float) ($factura->monto), 2, ".", "");
+                    $fechaFactura = Carbon::parse($factura->created_at);
+                    if ($fechaFactura >= $fechaNuevoPorcentaje) { // apartir del 2023-10-9 se aplico nuevo porcentaje
+                        // $totalFacturas += (float) number_format((float) ($factura->monto), 2, ".", "");
+                        $response["totalFacturaVendedores2Porciento"] += decimal($factura->monto * 0.01);
+                    }else{
+                        $response["totalFacturaVendedores2Porciento"] += decimal($factura->monto * 0.02);
+                    }
+
+                    $dataVendedor["totalFacturaVendedor"] = decimal($factura->monto);
+                    $response["totalFacturaVendedores"] += $dataVendedor["totalFacturaVendedor"];
                 }
 
-                $dataVendedor["totalFacturaVendedor"]  = (float) number_format($totalFacturas, 2, ".", "");
-                $sumaFactura += $dataVendedor["totalFacturaVendedor"];
+                // $dataVendedor["totalFacturaVendedor"]  = (float) number_format($totalFacturas, 2, ".", "");
+                // $sumaFactura += $dataVendedor["totalFacturaVendedor"];
             } else {
                 $dataVendedor["totalFacturaVendedor"]  = 0;
             }
@@ -935,8 +949,8 @@ function incentivoSupervisorQuery($request)
     }
 
     $response["totalRecuperacionVendedores"] = (float) number_format($sumaRecuperacion, 2, ".", "");
-    $response["totalFacturaVendedores"] = (float) number_format($sumaFactura, 2, ".", "");
-    $response["totalFacturaVendedores2Porciento"] = (float) number_format($response["totalFacturaVendedores"] * 0.02, 2, ".", "");
+    // $response["totalFacturaVendedores"] = (float) number_format($sumaFactura, 2, ".", "");
+    // $response["totalFacturaVendedores2Porciento"] = (float) number_format($response["totalFacturaVendedores"] * 0.02, 2, ".", "");
 
     // $response["totalFacturas"] = number_format($totalFacturas, 2, ".", "");
     // $response["totalFacturasX02"] = number_format($totalFacturas * 0.02, 2, ".", "");;
@@ -1451,6 +1465,7 @@ function CalcularIncentivo($request, $userId)
         $recibo->recibo_historial = $reciboHistorial->get();
 
         if (count($recibo->recibo_historial) > 0) {
+            $fechaNuevoPorcentaje = Carbon::parse('2023-10-9'); // fecha cambio de porcentaje a 4%
             foreach ($recibo->recibo_historial as $recibo_historial) {
                 // print_r(json_encode($recibo_historial));
 
@@ -1466,7 +1481,14 @@ function CalcularIncentivo($request, $userId)
                 }
 
                 if ($recibo_historial->factura_historial) {
-                    $response["total_contado"] += $recibo_historial->factura_historial->precio;
+                    $fechaCreacionAbono = Carbon::parse($recibo_historial->factura_historial->created_at);
+                    // dd([json_encode($fechaNuevoPorcentaje->toDateString()),json_encode($recibo_historial->factura_historial)]);
+                    if ($fechaCreacionAbono >= $fechaNuevoPorcentaje) { // apartir del 2023-10-9 se aplico nuevo porcentaje
+                        $response["total_credito"]  += decimal($recibo_historial->factura_historial->precio * 0.04);
+                    } else {
+                        $response["total_credito"] += decimal($recibo_historial->factura_historial->precio * 0.05);
+                    }
+                    $response["total"] += decimal($recibo_historial->factura_historial->precio);
                 }
             }
         }
@@ -1505,16 +1527,25 @@ function CalcularIncentivo($request, $userId)
 
                 $recibo_historial_contado->factura->cliente;
 
+                $fechaCreacionAbonoContado = Carbon::parse($recibo_historial_contado->factura->created_at);
                 if ($recibo_historial_contado->factura) {
-                    $response["total_credito"] += $recibo_historial_contado->factura->monto;
+
+                    if ($fechaCreacionAbonoContado >= $fechaNuevoPorcentaje) { // apartir del 2023-10-9 se aplico nuevo porcentaje
+                        $response["total_contado"]  += decimal($recibo_historial_contado->factura->monto * 0.04);
+                    } else {
+                        $response["total_contado"] += decimal($recibo_historial_contado->factura->monto * 0.05);
+                    }
+                    $response["total"] += decimal($recibo_historial_contado->factura->monto);
+                    // $response["total_credito"] += $recibo_historial_contado->factura->monto;
                 }
             }
         }
 
-        $response["total_credito"] = number_format($response["total_credito"], 2, ".", "");
-        $response["total_contado"] = number_format($response["total_contado"], 2, ".", "");
-        $response["total"]         = number_format($response["total_contado"] + $response["total_credito"], 2, ".", "");
-        $response["porcentaje5"]  = number_format($response["total"] * 0.05, 2, ".", "");
+        // $response["total_credito"] = number_format($response["total_credito"], 2, ".", "");
+        // $response["total_contado"] = number_format($response["total_contado"], 2, ".", "");
+        // $response["total"]         = $response["total_contado"] + $response["total_credito"];
+        // $response["porcentaje5"]   = $response["total"];
+        $response["porcentaje5"] = $response["total_contado"] + $response["total_credito"];
 
         $response["recibo"]        = $recibo;
     }

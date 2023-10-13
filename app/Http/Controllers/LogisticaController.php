@@ -112,6 +112,43 @@ class LogisticaController extends Controller
         return response()->json($response, 200);
     }
 
+    function ventasMensual(Request $request)
+    {
+        $response = [
+            'listadoVentas' => [],
+            'totalMetas' => 0,
+            'totalVentas' => 0,
+            'porcentaje' => 0,
+        ];
+
+        $users = User::where([
+            ["estado", "=", 1],
+        ])->get();
+        $dataRequest = (object) [
+            "allDates" => false,
+            "dateFin" => $request->dateFin,
+            "dateIni" => $request->dateIni,
+            "status_pagado" => 0,
+            "userId" => 0,
+            "allNumber" => false,
+            'allUsers' => false,
+        ];
+
+        foreach ($users as $user) {
+            $dataRequest->userId = $user->id;
+
+            $response["listadoVentas"][] = ventasMes($dataRequest, $user);
+        }
+
+        foreach ($response["listadoVentas"] as $ventaUsuario) {
+            $response["totalMetas"] += $ventaUsuario['meta'];
+            $response["totalVentas"] += $ventaUsuario['totalVentas'];
+        }
+        $response["porcentaje"] = decimal(($response["totalVentas"] / $response["totalMetas"]) * 100);
+
+        return response()->json($response, 200);
+    }
+
     function recuperacion(Request $request)
     {
         $response = [];

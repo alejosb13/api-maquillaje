@@ -95,6 +95,12 @@ class User extends Authenticatable
         return $this->hasMany(Cliente::class);
     }
 
+    // one to many
+    public function RecibosRangosSinTerminar()
+    {
+        return $this->hasMany(RecibosRangosSinTerminar::class);
+    }
+
     // one to one
     public function recibo()
     {

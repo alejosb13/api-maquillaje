@@ -47,9 +47,9 @@ class SaveIndicesDashboardCron extends Command
         $this->ejecutarActualizacionAdmin();
         $this->ejecutarActualizacionVendedores();
         $this->ejecutarActualizacionSupervisor();
-        
+
         // $this->info('Successfully sent daily quote to everyone.');
-        $this->info(response()->json(["status"=>"Successfully sent daily quote to everyone."], 200));
+        $this->info(response()->json(["status" => "Successfully sent daily quote to everyone."], 200));
 
         // return json_encode(["status"=>true]);
     }
@@ -112,6 +112,9 @@ class SaveIndicesDashboardCron extends Command
                 "clientes_inactivos" => $resumen["clientesInactivos"],
                 "clientes_reactivados" => $resumen["clientesReactivados"],
                 "productos_vendidos" => $resumen["productosVendidos"],
+                "ventas_mes_total" => decimal($resumen["contadorVentasMes"]["ventas_mes_total"]),
+                "ventas_mes_meta" => decimal($resumen["contadorVentasMes"]["ventas_mes_meta"]),
+                "ventas_mes_porcentaje" => decimal($resumen["contadorVentasMes"]["ventas_mes_porcentaje"]),
             ];
             IndicesDashboard::where('user_id', $usuario->id)->update($dataIndice);
             // IndicesDashboard::create($dataIndice);
@@ -176,6 +179,9 @@ class SaveIndicesDashboardCron extends Command
                 "clientes_inactivos" => $resumen["clientesInactivos"],
                 "clientes_reactivados" => $resumen["clientesReactivados"],
                 "productos_vendidos" => $resumen["productosVendidos"],
+                "ventas_mes_total" => decimal($resumen["contadorVentasMes"]["ventas_mes_total"]),
+                "ventas_mes_meta" => decimal($resumen["contadorVentasMes"]["ventas_mes_meta"]),
+                "ventas_mes_porcentaje" => decimal($resumen["contadorVentasMes"]["ventas_mes_porcentaje"]),
             ];
             IndicesDashboard::where('user_id', $usuario->id)->update($dataIndice);
             // IndicesDashboard::create($dataIndice);
@@ -242,6 +248,9 @@ class SaveIndicesDashboardCron extends Command
                 "clientes_inactivos" => $resumen["clientesInactivos"],
                 "clientes_reactivados" => $resumen["clientesReactivados"],
                 "productos_vendidos" => $resumen["productosVendidos"],
+                "ventas_mes_total" => decimal($resumen["ventas_mes_total"]),
+                "ventas_mes_meta" => decimal($resumen["ventas_mes_meta"]),
+                "ventas_mes_porcentaje" => decimal($resumen["ventas_mes_porcentaje"]),
             ];
             IndicesDashboard::where('user_id', $usuario->id)->update($dataIndice);
             // Log::info(json_encode($dataIndice));
@@ -328,6 +337,11 @@ class SaveIndicesDashboardCron extends Command
         $mora60_90List = [];
         $mora30_60ListTotal = [];
         $mora60_90ListTotal = [];
+        $contadorVentasMes = [
+            'ventas_mes_total' => 0,
+            'ventas_mes_meta' => 0,
+            'ventas_mes_porcentaje' => 0,
+        ];
         foreach ($usersActive as $user) {
             $dataRequest->userId = $user->id;
 
@@ -358,17 +372,24 @@ class SaveIndicesDashboardCron extends Command
                     $mora60_90ListTotal[] = $mora60_90;
                 }
             }
+
+            $responseVentasMes = ventasMes($dataRequest, $user);
+            $contadorVentasMes["ventas_mes_total"] += $responseVentasMes['totalVentas'];
+            $contadorVentasMes["ventas_mes_meta"] += $responseVentasMes['meta'];
         }
+
+        $contadorVentasMes["ventas_mes_porcentaje"] = decimal(($contadorVentasMes["ventas_mes_total"] / $contadorVentasMes["ventas_mes_meta"]) * 100);
 
         $response["mora30_60"] = $this->calcularTotalSaldo($mora30_60ListTotal);
         $response["mora60_90"] = $this->calcularTotalSaldo($mora60_90ListTotal);
 
         $response["cartera"] = ["total" => $contadorCartera];
-        
-        $metaVentas =  $contadorVentas["meta_monto"]==0?0 : decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
+
+        $metaVentas =  $contadorVentas["meta_monto"] == 0 ? 0 : decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
         $contadorVentas["meta"] = $metaVentas;
         $response["ventasMeta"] = $contadorVentas;
-
+        
+        $response["contadorVentasMes"] = $contadorVentasMes;
         // Fin Cartera y ventas 
 
         $contadorIncentivos["porcentaje20"] = decimal($contadorIncentivos["total"] * 0.20);
@@ -406,6 +427,15 @@ class SaveIndicesDashboardCron extends Command
         $response["productosVendidos"] = $productosVendidos["totalProductos"];
 
         $response["incentivos"] = incentivosQuery($request);
+
+        $responseVentasMes = ventasMes($request, $user);
+        $response["ventas_mes_total"] = $responseVentasMes['totalVentas'];
+        $response["ventas_mes_meta"] = $responseVentasMes['meta'];
+        if ($response["ventas_mes_meta"] > 0) {
+            $response["ventas_mes_porcentaje"] = decimal(($response["ventas_mes_total"] / $response["ventas_mes_meta"]) * 100);
+        } else {
+            $response["ventas_mes_porcentaje"] = 0;
+        }
 
         $response["clientesNuevos"] = count(clienteNuevo($request));
         $response["clientesInactivos"] = count(clientesInactivosQuery($request));

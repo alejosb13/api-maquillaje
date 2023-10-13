@@ -72,6 +72,11 @@
         border-bottom: 1px solid
     }
 
+    .detail table td .simbolo-precio{
+        font-size: 12px;
+        font-weight: 900;
+    }
+
     .detail table {
         border-collapse: collapse;
     }
@@ -105,11 +110,10 @@
     }
 
     .logo {
-        /* position: absolute; */
         float: left;
         display: block;
-        width: 70px;
-        height: 70px;
+        width: 95px;
+        height: 60px;
         z-index: 9999;
     }
 
@@ -165,7 +169,7 @@
                     <tr>
                         <th>Marca</th>
                         <th>Stock</th>
-                        <th>Precio</th>
+                        <th style="min-width:70px;">Precio</th>
                         <th>Descripción</th>
                         <th>Observación</th>
                     </tr>
@@ -175,7 +179,7 @@
                     <tr>
                         <td>{{ $producto->marca }}</td>
                         <td>{{ $producto->stock }}</td>
-                        <td>{{ bcdiv($producto->precio, 1, 2) }} C$</td>
+                        <td>{{ bcdiv($producto->precio, 1, 2) }} <span class="simbolo-precio">C$</span></td>
                         <td>{{ $producto->descripcion }}</td>
                         <td class="separador"> </td>
                     </tr>

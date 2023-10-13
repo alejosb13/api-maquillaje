@@ -27,5 +27,8 @@ class IndicesDashboard extends Model
         "clientes_inactivos",
         "clientes_reactivados",
         "productos_vendidos",
+        "ventas_mes_total",
+        "ventas_mes_meta",
+        "ventas_mes_porcentaje",
     ];
 }

@@ -104,6 +104,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('logistica/producto-logistica', [LogisticaController::class, 'productoLogistica']);
     Route::post('logistica/clientes-reactivados', [LogisticaController::class, 'clientesReactivados']);
     Route::post('logistica/ventas', [LogisticaController::class, 'ventasDate']);
+    Route::post('logistica/ventas-mensual', [LogisticaController::class, 'ventasMensual']);
     Route::post('logistica/recuperacion', [LogisticaController::class, 'recuperacion']);
     Route::post('logistica/productos-vendidos', [LogisticaController::class, 'productosVendidos']);
     Route::post('logistica/resumen-dashboard', [LogisticaController::class, 'resumenDashboard']);
@@ -140,6 +141,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
 
     Route::resource('abonos', FacturaHistorial::class);
 
+    Route::get('recibos/rango/status/{id}', [ReciboController::class, 'changeRangoRecibo']);
     Route::resource('recibos', ReciboController::class);
     Route::resource('recibos/historial/contado', ReciboHistorialContadoController::class);
     Route::resource('recibos/historial/credito', ReciboHistorialController::class);

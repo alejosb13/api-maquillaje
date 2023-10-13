@@ -344,6 +344,27 @@ class ListadosPaginasController extends Controller
             return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
         });
 
+        // ** Filtrado por numero de recibo
+        $abonos->when($request->numeroRecibo, function ($q) use ($request) {
+            $query = $q;
+            $fHistorial_ids = [];
+            $recibos = ReciboHistorial::select("*")
+                ->where('estado', 1)
+                ->where('numero', $request->numeroRecibo)
+                ->get();
+
+            // dd(json_encode($recibos));
+            if (count($recibos) > 0) {
+                foreach ($recibos as $recibo) {
+                    $fHistorial_ids[] = $recibo->factura_historial_id;
+                }
+
+                $query = $query->wherein('id', $fHistorial_ids);
+            }
+
+            return $query;
+        });
+
         // filtrados para campos numericos
         $abonos->when($request->filter && is_numeric($request->filter), function ($q) use ($request) {
             $query = $q;

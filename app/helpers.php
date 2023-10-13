@@ -931,7 +931,7 @@ function incentivoSupervisorQuery($request)
                     if ($fechaFactura >= $fechaNuevoPorcentaje) { // apartir del 2023-10-9 se aplico nuevo porcentaje
                         // $totalFacturas += (float) number_format((float) ($factura->monto), 2, ".", "");
                         $response["totalFacturaVendedores2Porciento"] += decimal($factura->monto * 0.01);
-                    }else{
+                    } else {
                         $response["totalFacturaVendedores2Porciento"] += decimal($factura->monto * 0.02);
                     }
 
@@ -1968,6 +1968,78 @@ function mora60_90Query($request)
             }
         }
     }
+
+    return $response;
+}
+
+function ventasMes($request,$usuario)
+{
+    $response = [
+        'totalVentas' => 0,
+        'meta' => 0,
+        'porcentaje' => 0,
+        'factura' => [],
+    ];
+
+    $metaValue = 0;
+    $userId = $request->userId;
+    if (empty($request->dateIni)) {
+        $dateIni = Carbon::now();
+    } else {
+        $dateIni = Carbon::parse($request->dateIni);
+    }
+
+    if (empty($request->dateIni)) {
+        $dateFin = Carbon::now();
+    } else {
+        $dateFin = Carbon::parse($request->dateFin);
+    }
+
+    $dateIni =  Carbon::parse($dateIni);
+    $dateFin =  Carbon::parse($dateFin);
+
+
+    $facturasStorage = Factura::select("*")
+        //->where('tipo_venta', $request->tipo_venta ? $request->tipo_venta : 1) // si envian valor lo tomo, si no por defecto toma credito
+        // ->where('status_pagado', $request->status_pagado ? $request->status_pagado : 0) // si envian valor lo tomo, si no por defecto asigno por pagar = 0
+        ->where('status', 1);
+
+    if (!$request->allDates) {
+        $facturasStorage = $facturasStorage->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+    }
+
+    if ($userId != 0) {
+        $facturasStorage = $facturasStorage->where('user_id', $userId);
+    }
+
+    $facturas = $facturasStorage->get();
+    if (count($facturas) > 0) {
+        $total = 0;
+        foreach ($facturas as $factura) {
+            // $factura->user;
+            $total += decimal($factura->monto);
+        }
+
+        $response["totalVentas"] = $total;
+        $response["factura"] = $facturas;
+    }
+
+    $meta = getMetaPorUsuario($userId, $dateIni->toDateString() . " 00:00:00", $dateFin->toDateString() . " 23:59:59");
+
+    if ($meta) {
+        $metaValue = $meta->monto_meta;
+        // print_r(json_encode($metaValue));
+        if ($metaValue == 0) {
+            $averageMeta = 0;
+        } else {
+            $averageMeta = ($response["totalVentas"] / $metaValue) * 100;
+        }
+
+        $response["meta"] = $metaValue;
+        $response["porcentaje"] = decimal($averageMeta);
+    }
+
+    $response["user"] = $usuario;
 
     return $response;
 }

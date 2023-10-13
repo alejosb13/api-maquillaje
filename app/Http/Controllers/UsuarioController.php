@@ -38,6 +38,9 @@ class UsuarioController extends Controller
                     )->orderBy('created_at', 'desc')->first();
                 }
                 $usuario->meta;
+                $usuario->recibosRangosSinTerminar = $usuario->RecibosRangosSinTerminar()->where([
+                    ["estado", 1],
+                ])->get();
 
                 $role_id = DB::table('model_has_roles')->where('model_id', $usuario->id)->first();
                 $usuario->role_id = $role_id->role_id;

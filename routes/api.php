@@ -167,6 +167,8 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::patch('configuracion/taza-cambio/factura', [ConfiguracionController::class, 'updateTazaCambioFactura']);
     Route::post('configuracion/taza-cambio/factura', [ConfiguracionController::class, 'saveTazaCambioFactura']);
     Route::get('configuracion/taza-cambio/factura/{id}', [ConfiguracionController::class, 'getTazaCambioFactura']);
+
+    Route::get('configuracion/refresh-indice', [DashboardController::class, 'refresIndice']);
 });
 
 
@@ -181,10 +183,10 @@ Route::get('configuracion/crons', function () {
     Artisan::call('meta:recuperacion');
     // echo Artisan::output();
 });
-Route::get('configuracion/crons-5-min', function () {
-    Artisan::call('save:indice');
-    echo Artisan::output();
-});
+// Route::get('configuracion/crons-5-min', function () {
+//     Artisan::call('save:indice');
+//     echo Artisan::output();
+// });
 Route::get('configuracion/clear-cache', function () {
     echo Artisan::call('config:clear');
     echo Artisan::call('config:cache');

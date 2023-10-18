@@ -94,6 +94,29 @@ class SaveIndicesDashboardCron extends Command
             ->get();
 
         foreach ($usuarios as $usuario) {
+            $payloadAdminVentas = (object) [
+                "link" => null,
+                "allDates" => false,
+                "status_pagado" => 0,
+                "allNumber" => true,
+                "allUsers" => false,
+                "userId" => $usuario->id,
+                "dateFin" => $finMesActual,
+                "dateIni" => $inicioMesActual,
+            ];
+            $contadorVentas = [
+                "total" => 0,
+                "meta_monto" => 0,
+                "meta" => 0,
+            ];
+            $responseVentasMetaQuery = ventasMetaQuery($payloadAdminVentas);
+            $contadorVentas["meta_monto"] = $responseVentasMetaQuery["meta_monto"];
+            $contadorVentas["total"] = $responseVentasMetaQuery["total"];
+
+            $metaVentas =  $contadorVentas["meta_monto"] == 0 ? 0 : decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
+            $contadorVentas["meta"] = $metaVentas;
+            $resumen["ventasMeta"] = $contadorVentas;
+
             $dataIndice = [
                 // 'user_id' => $usuario->id,
                 "cartera_total" => decimal($resumen["cartera"]["total"]),
@@ -126,17 +149,6 @@ class SaveIndicesDashboardCron extends Command
         $inicioMesActual =  Carbon::now()->firstOfMonth()->toDateString();
         $finMesActual =  Carbon::now()->lastOfMonth()->toDateString();
 
-        // { ejemplo de payload
-        // "link": null,
-        // "allUsers": false,
-        // "status_pagado": 0,
-        // "allNumber": true,
-        // "allDates": false,
-        // "userId": 25,
-        // "dateIni": "2023-08-01",
-        // "dateFin": "2023-08-31"
-        //   }
-
         $payloadAdmin = (object) [
             "link" => null,
             "allDates" => false,
@@ -161,6 +173,29 @@ class SaveIndicesDashboardCron extends Command
             ->get();
 
         foreach ($usuarios as $usuario) {
+            $payloadAdminVentas = (object) [
+                "link" => null,
+                "allDates" => false,
+                "status_pagado" => 0,
+                "allNumber" => true,
+                "allUsers" => false,
+                "userId" => $usuario->id,
+                "dateFin" => $finMesActual,
+                "dateIni" => $inicioMesActual,
+            ];
+            $contadorVentas = [
+                "total" => 0,
+                "meta_monto" => 0,
+                "meta" => 0,
+            ];
+            $responseVentasMetaQuery = ventasMetaQuery($payloadAdminVentas);
+            $contadorVentas["meta_monto"] = $responseVentasMetaQuery["meta_monto"];
+            $contadorVentas["total"] = $responseVentasMetaQuery["total"];
+
+            $metaVentas =  $contadorVentas["meta_monto"] == 0 ? 0 : decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
+            $contadorVentas["meta"] = $metaVentas;
+            $resumen["ventasMeta"] = $contadorVentas;
+
             $dataIndice = [
                 // 'user_id'=> $usuario->id,
                 "cartera_total" => decimal($resumen["cartera"]["total"]),
@@ -320,14 +355,19 @@ class SaveIndicesDashboardCron extends Command
         $response["clientesNuevos"] = count(clienteNuevo($dataRequest));
         $response["clientesInactivos"] = count(clientesInactivosQuery($dataRequest));
         $response["clientesReactivados"] = count(clientesReactivadosQuery($dataRequest));
+     
+        // $contadorVentas = [
+        //     "total" => 0,
+        //     "meta_monto" => 0,
+        //     "meta" => 0,
+        // ];
+        // $responseVentasMetaQuery = ventasMetaQuery($request);
+        // $contadorVentas["meta_monto"] = $responseVentasMetaQuery["meta_monto"];
+        // $contadorVentas["total"] = $responseVentasMetaQuery["total"];
 
         // Cartera y ventas
         $contadorCartera = 0;
-        $contadorVentas = [
-            "total" => 0,
-            "meta_monto" => 0,
-            "meta" => 0,
-        ];
+
 
         $contadorIncentivos = [
             "porcentaje20" => 0,
@@ -348,11 +388,11 @@ class SaveIndicesDashboardCron extends Command
             $responseCarteraQuery = carteraQuery($dataRequest);
             $contadorCartera += $responseCarteraQuery["total"];
 
-            $responseVentasMetaQuery = ventasMetaQuery($dataRequest);
-            if (!in_array($user->id, [20, 21, 23, 24, 32])) {
-                $contadorVentas["meta_monto"] += $responseVentasMetaQuery["meta_monto"];
-                $contadorVentas["total"] += $responseVentasMetaQuery["total"];
-            }
+            // $responseVentasMetaQuery = ventasMetaQuery($dataRequest);
+            // if (!in_array($user->id, [20, 21, 23, 24, 32])) {
+            //     $contadorVentas["meta_monto"] += $responseVentasMetaQuery["meta_monto"];
+            //     $contadorVentas["total"] += $responseVentasMetaQuery["total"];
+            // }
 
             $responseIncentivo = incentivosQuery($dataRequest);
             if (!in_array($user->id, [20, 21, 23, 24, 25, 32])) {
@@ -385,10 +425,10 @@ class SaveIndicesDashboardCron extends Command
 
         $response["cartera"] = ["total" => $contadorCartera];
 
-        $metaVentas =  $contadorVentas["meta_monto"] == 0 ? 0 : decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
-        $contadorVentas["meta"] = $metaVentas;
-        $response["ventasMeta"] = $contadorVentas;
-        
+        // $metaVentas =  $contadorVentas["meta_monto"] == 0 ? 0 : decimal(($contadorVentas["total"] / $contadorVentas["meta_monto"]) * 100);
+        // $contadorVentas["meta"] = $metaVentas;
+        // $response["ventasMeta"] = $contadorVentas;
+
         $response["contadorVentasMes"] = $contadorVentasMes;
         // Fin Cartera y ventas 
 

@@ -1336,7 +1336,7 @@ function convertTazaCambio($monto)
 
 function decimal($monto)
 {
-    return number_format((float) ($monto), 2, ".", "");
+    return (float) number_format((float) ($monto), 2, ".", "");
 }
 
 function productosVendidos($request)

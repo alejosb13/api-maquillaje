@@ -70,7 +70,6 @@
     .detail table th {
         text-align: left;
         border-bottom: 1px solid
-        
     }
 
     .detail table td {
@@ -143,7 +142,7 @@
 <body>
 
     @foreach($data as $key => $page)
-    <h6 style="float: right">Pagina {{ $key + 1 }} de {{ count($data) }} <br>Total {{ $cantidad }} </h6>
+    <h6 style="float: right">Pagina {{ $key + 1 }} de {{ count($data) }} <br>Total {{ $total }} </h6>
     <img class="logo" src="lib/img/logo_png.png" style="margin-top: 15px" alt="">
     <h5 style="text-align: center;">M&R Profesional <br> ALTAMIRA DE DONDE FUE EL BDF 1C A LAGO 1C ARRIBA CONTIGUO A ETIRROL <br> Teléfonos: 84220028-88071569-81562408</h5>
     </div>
@@ -154,43 +153,34 @@
             <table style="width: 100%">
                 <thead>
                     <tr>
-                        <!-- <th>Código cliente</th> -->
                         <th>#</th>
-                        <th>Nombre Completo</th>
-                        <th>Dirección</th>
-                        <th>Celular</th>
-                        <th>Saldo Actual</th>
-                        <th>Ultima Fecha de Pago</th>
-                        <th>Vencimiento ultima F.</th>
-                        <th>Dias de Cobro</th>
+                        <th>NOMBRE CLIENTE</th>
+                        <th>NOMBRE EMPRESA</th>
+                        <th>MONTO FACTURA</th>
+                        <th>SALDO</th>
+                        <!-- <th>VENDEDOR</th> -->
+                        <th>FECHA DE VENCIMIENTO</th>
+                        <th>DÍAS VENCIDOS</th>
                     </tr>
                 </thead>
                 <tbody>
-
-                    @foreach($data[$key] as $historico)
+                    @foreach($data[$key] as $factura)
                     <tr>
-                        <td>{{ $historico->id }}</td>
-                        <td>{{ $historico->nombreCompleto }}</td>
-                        <td>{{ $historico->direccion_casa }}</td>
-                        <td>{{ $historico->celular }}</td>
-                        <td>${{ $historico->saldo }}</td>
-                        @if($historico->ultimoAbono)
-                        <td>{{ \Carbon\Carbon::parse($historico->ultimoAbono->created_at )->format('j-m-Y') }} </td>
+                        <td>{{ $factura->id }}</td>
+                        <td>{{ $factura->cliente->nombreCompleto }}</td>
+                        <td>{{ $factura->cliente->nombreEmpresa }}</td>
+                        <td>{{ bcdiv($factura->monto, 1, 2) }} <span class="simbolo-precio">$</span></td>
+                        <td>{{ $factura->tipo_venta == 1 ? number_format((float) $factura->saldo_restante ,2,".","")."$" : "-"}}</td>
+                        <td>{{ $factura->user->name }} {{ $factura->user->apellido }}</td>
+                        <!-- <td>{{ $factura->fecha_vencimiento }}</td> -->
+                        @if($factura->diferenciaDias > 1)
+                        <td>{{$factura->diferenciaDias}} días</td>
                         @else
-                        <td> No posee abonos</td>
+                        <td>{{$factura->diferenciaDias}} día</td>
                         @endif
 
-                        @if($historico->ultimaFactura)
-                        <td>{{ \Carbon\Carbon::parse($historico->ultimaFactura->fecha_vencimiento )->format('j-m-Y') }} </td>
-                        @else
-                        <td>Sin Facturas</td>
-
-                        @endif
-                        <td>{!! $historico->dias_cobro !!}</td>
                     </tr>
                     @endforeach
-
-
                 </tbody>
             </table>
         </div>

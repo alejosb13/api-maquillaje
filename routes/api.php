@@ -72,6 +72,8 @@ Route::get('pdf/registroclientes', [PdfController::class, 'registro_cliente']);
 Route::post('pdf/productos_vendidos_usuario', [PdfController::class, 'productosVendidosUsuario']);
 Route::post('pdf/productos_vendidos_supervisor', [PdfController::class, 'productosVendidosSupervisor']);
 Route::get('pdf/productos_vendidos', [PdfController::class, 'productosVendidos']);
+Route::post('pdf/mora60a90', [PdfController::class, 'mora60a90']);
+Route::post('pdf/clientes-inactivos', [PdfController::class, 'clientesInactivosPDF']);
 Route::get('pdf/{id}', [PdfController::class, 'facturaPagonew']);
 Route::get('pdf/estado_cuenta/{id}', [PdfController::class, 'estadoCuenta']);
 Route::post('pdf/cartera', [PdfController::class, 'cartera']);
@@ -109,7 +111,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::post('logistica/productos-vendidos', [LogisticaController::class, 'productosVendidos']);
     Route::post('logistica/resumen-dashboard', [LogisticaController::class, 'resumenDashboard']);
     Route::post('logistica/resumen-dashboard-admin', [LogisticaController::class, 'resumenDashboardAdmin']);
-    
+
     Route::get('resumen/dashboard/user/{id}', [DashboardController::class, 'show']);
 
     Route::get('cliente/factura/{id}',  [ClienteController::class, 'clienteToFactura']);

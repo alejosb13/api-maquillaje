@@ -252,7 +252,7 @@ class PdfController extends Controller
         }
 
         if (count($regaloList) > 0) {
-            $factura->factura_detalle = array_merge($factura->factura_detalle, $regaloList,$factura->factura_detalle);
+            $factura->factura_detalle = array_merge($factura->factura_detalle, $regaloList, $factura->factura_detalle);
         }
 
         // $data['productos'] = array_chunk(json_decode(json_encode($factura->factura_detalle)), 6);
@@ -435,6 +435,52 @@ class PdfController extends Controller
         return $archivo->download('inventario_producto.pdf');
     }
 
+    public function mora60a90(Request $request)
+    {
+        $dataQuery = mora60_90Query($request);
+
+        $data['facturas'] = array_chunk(json_decode(json_encode($dataQuery['factura'])), 30);
+
+
+        $data = [
+            'data' => $data['facturas'],
+            'total' => count($dataQuery['factura'])
+        ];
+        // dd(json_encode($data));
+
+
+        $archivo = PDF::loadView('facturasmora60a90', $data);
+        $pdf = PDF::loadView('facturasmora60a90', $data)->output();
+
+        Storage::disk('public')->put('facturasmora60a90.pdf', $pdf);
+
+
+        return $archivo->download('facturasmora60a90.pdf');
+    }
+
+    public function clientesInactivosPDF(Request $request)
+    {
+        $dataQuery = clientesInactivosQuery($request);
+
+        $data['clientes'] = array_chunk(json_decode(json_encode($dataQuery)), 9);
+
+
+        $data = [
+            'data' => $data['clientes'],
+            'total' => count($dataQuery)
+        ];
+        // dd(json_encode($data));
+
+
+        $archivo = PDF::loadView('clientes_inactivos', $data);
+        $pdf = PDF::loadView('clientes_inactivos', $data)->output();
+
+        Storage::disk('public')->put('clientes_inactivos.pdf', $pdf);
+
+
+        return $archivo->download('clientes_inactivos.pdf');
+    }
+
     public function productosVendidos(Request $request)
     {
 
@@ -540,7 +586,7 @@ class PdfController extends Controller
         // print_r(json_encode($response));
         // $response['data'] =
         $data = [
-            'data' =>  array_chunk(json_decode(json_encode($response)), 25),
+            'data' =>  array_chunk(json_decode(json_encode($response)), 22),
             'cantidad' => count($response),
         ];
 
@@ -771,6 +817,15 @@ class PdfController extends Controller
                         ["cliente_id", $cliente->id],
                     ]
                 )->orderBy('created_at', 'desc')->first();
+
+                $ultimaFactura = Factura::where(
+                    [
+                        ["cliente_id", $cliente->id],
+                        ["status", 1],
+                        // ["status_pagado", 0],
+                    ]
+                )->orderBy('created_at', 'desc')->first();
+                $cliente->ultimaFactura = $ultimaFactura;
             }
             // dd(json_encode($clientes));
 

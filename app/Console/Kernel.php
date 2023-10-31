@@ -22,6 +22,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('meta:recuperacion');
         $schedule->command('sanctum:prune-expired --hours=24')->daily();
+        $schedule->command('reset:categorys')->monthly();
         // $schedule->command('save:indice')->everyFiveMinutes();
 
         // $schedule->command('save:indice')->everyMinute();

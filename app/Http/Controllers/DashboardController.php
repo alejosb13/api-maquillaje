@@ -70,7 +70,7 @@ class DashboardController extends Controller
         }
 
         $status = 200;
-        $response["mensaje"]= "indice actualizado";
+        $response["mensaje"] = "indice actualizado";
 
         $response["data"] = $this->ejecutarActualizacionIndices($payload, $resumen);
         return response()->json($response, $status);
@@ -281,7 +281,11 @@ class DashboardController extends Controller
             $response["ventas_mes_meta"] += $responseVentasMes['meta'];
         }
 
-        $response["ventas_mes_porcentaje"] = decimal(($response["ventas_mes_total"] / $response["ventas_mes_meta"]) * 100);
+        if ($response["ventas_mes_meta"] > 0) {
+            $response["ventas_mes_porcentaje"] = decimal(($response["ventas_mes_total"] / $response["ventas_mes_meta"]) * 100);
+        } else {
+            $response["ventas_mes_porcentaje"] = 0;
+        }
 
         $response["mora30_60"] = $this->calcularTotalSaldo($mora30_60ListTotal);
         $response["mora60_90"] = $this->calcularTotalSaldo($mora60_90ListTotal);

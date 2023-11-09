@@ -182,8 +182,9 @@ Route::get('list/clientes', [ListadosPaginasController::class, 'clientesList']);
 Route::get('list/productos-clientes', [ListadosPaginasController::class, 'FacturaDetailClientList']);
 
 Route::get('configuracion/crons', function () {
-    Artisan::call('meta:recuperacion');
-    // echo Artisan::output();
+    Artisan::call('schedule:run');
+   // Artisan::call('reset:categorys');
+    echo Artisan::output();
 });
 // Route::get('configuracion/crons-5-min', function () {
 //     Artisan::call('save:indice');
@@ -194,6 +195,9 @@ Route::get('configuracion/clear-cache', function () {
     echo Artisan::call('config:cache');
     echo Artisan::call('cache:clear');
     echo Artisan::call('route:clear');
+
+    Artisan::call('schedule:list');
+    echo Artisan::output();
 });
 
 

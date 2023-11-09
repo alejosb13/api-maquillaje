@@ -20,9 +20,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('meta:recuperacion');
-        $schedule->command('sanctum:prune-expired --hours=24')->daily();
         $schedule->command('reset:categorys')->monthly();
+        $schedule->command('sanctum:prune-expired --hours=24')->daily();
+        $schedule->command('meta:recuperacion');
         // $schedule->command('save:indice')->everyFiveMinutes();
 
         // $schedule->command('save:indice')->everyMinute();

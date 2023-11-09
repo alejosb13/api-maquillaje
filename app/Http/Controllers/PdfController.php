@@ -669,6 +669,7 @@ class PdfController extends Controller
             'Celular',
             'Saldo_Actual',
             'Ultima_Fecha_de_Pago',
+            'UltimaFactura',
             'Dias_de_Cobro',
         );
 
@@ -684,10 +685,10 @@ class PdfController extends Controller
                 $cliente->celular,
                 $cliente->saldo,
                 ($cliente->ultimoAbono) ? Carbon::parse($cliente->ultimoAbono->created_at)->format('j-m-Y') : "No posee abonos",
+                $cliente->ultimaFactura ? Carbon::parse($cliente->ultimaFactura->fecha_vencimiento)->format('j-m-Y') : "Sin Facturas",
                 $cliente->dias_cobro,
             );
         }
-
         $export = new ClientExport([
             $dataExcell
         ]);

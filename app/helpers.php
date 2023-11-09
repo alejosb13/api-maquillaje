@@ -910,6 +910,7 @@ function incentivoSupervisorQuery($request)
             $dataVendedor["idUser"] = $user->id;
             $dataVendedor["porcentajeRecuperacion5"] = (float) $responsequery['porcentaje5'];
             $dataVendedor["totalRecuperacion"] = (float) $responsequery['total'];
+            $dataVendedor["totalFacturaVendedor"] = 0;
 
             // array_push($response, $responsequery);
 
@@ -935,7 +936,7 @@ function incentivoSupervisorQuery($request)
                         $response["totalFacturaVendedores2Porciento"] += decimal($factura->monto * 0.02);
                     }
 
-                    $dataVendedor["totalFacturaVendedor"] = decimal($factura->monto);
+                    $dataVendedor["totalFacturaVendedor"] += decimal($factura->monto);
                     $response["totalFacturaVendedores"] += $dataVendedor["totalFacturaVendedor"];
                 }
 

@@ -1873,6 +1873,7 @@ function mora30_60Query($request)
 {
     $response = [
         'factura' => [],
+        'total_saldo' => 0
     ];
     $userId = $request->userId;
     $fechaActual = Carbon::now();
@@ -1907,6 +1908,7 @@ function mora30_60Query($request)
                 $factura->cliente;
                 $factura->vencimiento30 = $fechaPasado30DiasVencimiento;
                 $factura->vencimiento60 = $fechaPasado60DiasVencimiento;
+                $response["total_saldo"] += $factura->saldo_restante;
 
                 // $factura->diferenciaDias = Carbon::parse($factura->fecha_vencimiento)->diffInDays($fechaActual);
                 $factura->diferenciaDias = Carbon::parse($factura->created_at)->diffInDays($fechaActual);
@@ -1924,6 +1926,7 @@ function mora60_90Query($request)
 {
     $response = [
         'factura' => [],
+        'total_saldo' => 0,
     ];
 
     $userId = $request->userId;
@@ -1962,6 +1965,8 @@ function mora60_90Query($request)
                 $factura->vencimiento60  = $fechaPasado60DiasVencimiento;
                 $factura->vencimiento90  = $fechaPasado90DiasVencimiento;
 
+                $response["total_saldo"] += $factura->saldo_restante;
+
                 // $factura->diferenciaDias = Carbon::parse($factura->fecha_vencimiento)->diffInDays($fechaActual);
                 $factura->diferenciaDias = Carbon::parse($factura->created_at)->diffInDays($fechaActual);
 
@@ -1973,7 +1978,7 @@ function mora60_90Query($request)
     return $response;
 }
 
-function ventasMes($request,$usuario)
+function ventasMes($request, $usuario)
 {
     $response = [
         'totalVentas' => 0,

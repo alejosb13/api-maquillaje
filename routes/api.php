@@ -186,6 +186,14 @@ Route::get('configuracion/crons', function () {
    // Artisan::call('reset:categorys');
     echo Artisan::output();
 });
+
+Route::get('configuracion/crons-list', function () {
+    //    Artisan::call('reset:categorys');
+    Artisan::call('schedule:list');
+
+    echo Artisan::output();
+});
+
 // Route::get('configuracion/crons-5-min', function () {
 //     Artisan::call('save:indice');
 //     echo Artisan::output();
@@ -196,8 +204,8 @@ Route::get('configuracion/clear-cache', function () {
     echo Artisan::call('cache:clear');
     echo Artisan::call('route:clear');
 
-    Artisan::call('schedule:list');
-    echo Artisan::output();
+  //  Artisan::call('schedule:list');
+    //echo Artisan::output();
 });
 
 

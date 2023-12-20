@@ -44,20 +44,20 @@ class ResetCategoryCron extends Command
         Log::info('Iniciar Reset Categorias');
 
 
-        $categoriaListaNegra =  Categoria::where([
-            ['tipo', '=', "LN"],
-            ['estado', '=', 1]
-        ])->first();
+        // $categoriaListaNegra =  Categoria::where([
+        //     ['tipo', '=', "LN"],
+        //     ['estado', '=', 1]
+        // ])->first();
 
-        $categoriaC =  Categoria::where([
-            ['tipo', '=', "C"],
-            ['estado', '=', 1]
-        ])->first();
+        // $categoriaC =  Categoria::where([
+        //     ['tipo', '=', "C"],
+        //     ['estado', '=', 1]
+        // ])->first();
 
-        Cliente::where([
-            ["estado", "=", 1],
-            ["categoria_id", "!=", $categoriaListaNegra->id]
-        ])->update(['categoria_id' => $categoriaC->id]);
+        // Cliente::where([
+        //     ["estado", "=", 1],
+        //     ["categoria_id", "!=", $categoriaListaNegra->id]
+        // ])->update(['categoria_id' => $categoriaC->id]);
 
         $this->info(response()->json(["status" => "Successfully reset Category."], 200));
     }

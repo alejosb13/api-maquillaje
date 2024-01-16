@@ -325,11 +325,24 @@ class ReciboController extends Controller
     {
 
         if ($id) {
-            $minimo = DB::table('recibos')->where('id', "!=", $id)->whereBetween('min', [$min, $max])->get();
-            $maximo = DB::table('recibos')->where('id', "!=", $id)->whereBetween('max', [$min, $max])->get();
+            $minimo = DB::table('recibos')->where([
+                ['id', "!=", $id],
+                ['estado', "=", 1],
+            ])->whereBetween('min', [$min, $max])->get();
+
+            $maximo = DB::table('recibos')->where([
+                ['id', "!=", $id],
+                ['estado', "=", 1],
+            ])->whereBetween('max', [$min, $max])->get();
+        
         } else {
-            $minimo = DB::table('recibos')->whereBetween('min', [$min, $max])->get();
-            $maximo = DB::table('recibos')->whereBetween('max', [$min, $max])->get();
+            $minimo = DB::table('recibos')->where([
+                ['estado', "=", 1],
+            ])->whereBetween('min', [$min, $max])->get();
+            
+            $maximo = DB::table('recibos')->where([
+                ['estado', "=", 1],
+            ])->whereBetween('max', [$min, $max])->get();
         }
 
         // print_r (json_encode($minimo));

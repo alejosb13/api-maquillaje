@@ -14,6 +14,7 @@ use App\Http\Controllers\FacturaDetallesController;
 use App\Http\Controllers\FacturaHistorial;
 use App\Http\Controllers\FrecuenciaController;
 use App\Http\Controllers\FrecuenciasFacturasController;
+use App\Http\Controllers\InversionController;
 use App\Http\Controllers\ListadosPaginasController;
 use App\Http\Controllers\LogisticaController;
 use App\Http\Controllers\MetasController;
@@ -171,6 +172,9 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('configuracion/taza-cambio/factura/{id}', [ConfiguracionController::class, 'getTazaCambioFactura']);
 
     Route::get('configuracion/refresh-indice', [DashboardController::class, 'refresIndice']);
+
+    
+    Route::resource('finanzas/inversion', InversionController::class);
 });
 
 

@@ -8,6 +8,7 @@ use App\Models\Factura;
 use App\Models\Factura_Detalle;
 use App\Models\FacturaHistorial;
 use App\Models\MetaHistorial;
+use App\Models\Producto;
 use App\Models\Recibo;
 use App\Models\ReciboHistorial;
 use App\Models\User;
@@ -544,8 +545,8 @@ class ListadosPaginasController extends Controller
                 // ->where('estado', 1)
                 ->where('id', $request->userId)
                 ->first();
-            
-                // print_r( $request->userId);
+
+            // print_r( $request->userId);
             if (!$user) {
                 return $query;
             }
@@ -558,7 +559,7 @@ class ListadosPaginasController extends Controller
             $dias = explode(",", $request->diasCobros);
             $condicionDiasCobro = [];
             foreach ($dias as $dia) {
-                array_push($condicionDiasCobro,['dias_cobro', 'LIKE', '%' . $dia . '%',"or"]);
+                array_push($condicionDiasCobro, ['dias_cobro', 'LIKE', '%' . $dia . '%', "or"]);
             }
             return $query->where($condicionDiasCobro);
         });
@@ -605,11 +606,11 @@ class ListadosPaginasController extends Controller
             //     ->where('direccion_casa', 'LIKE', '%' . $request->filter . '%',"or");
             $query = $query->where(
                 [
-                    ['nombreCompleto', 'LIKE', '%' . $request->filter . '%',"or"],
-                    ['nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or"],
-                    ['direccion_casa', 'LIKE', '%' . $request->filter . '%',"or"],
+                    ['nombreCompleto', 'LIKE', '%' . $request->filter . '%', "or"],
+                    ['nombreEmpresa', 'LIKE', '%' . $request->filter . '%', "or"],
+                    ['direccion_casa', 'LIKE', '%' . $request->filter . '%', "or"],
                 ]
-                );
+            );
             //     ->where('nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or")
             //     ->where('direccion_casa', 'LIKE', '%' . $request->filter . '%',"or");
 
@@ -622,7 +623,7 @@ class ListadosPaginasController extends Controller
         } else {
             $clientes = $clientes->get();
         }
-        
+
         // dd(DB::getQueryLog());
 
         if (count($clientes) > 0) {
@@ -639,11 +640,11 @@ class ListadosPaginasController extends Controller
                 if ($saldoCliente > 0) {
                     $cliente->saldo = number_format(-(float) $saldoCliente, 2);
                 }
-                
+
                 if ($saldoCliente == 0) {
                     $cliente->saldo = $saldoCliente;
                 }
-                
+
                 if ($saldoCliente < 0) {
                     // $cliente->saldo = number_format((float) str_replace("-", "", $saldoCliente), 2);
                     $saldo_sin_guion = str_replace("-", "", $saldoCliente);
@@ -656,6 +657,64 @@ class ListadosPaginasController extends Controller
         }
 
         $response = $clientes;
+
+
+        return response()->json($response, $status);
+    }
+
+    public function ProductosList(Request $request)
+    {
+        // dd($request->all());
+        $response = [];
+        $status = 200;
+
+        // DB::enableQueryLog();
+
+        $Productos =  Producto::query();
+
+        $Productos->when($request->estado, function ($q) use ($request) {
+            return $q->where('estado', $request->estado);
+        });
+
+        // ** Filtrado para string
+        $Productos->when($request->filter && !is_numeric($request->filter), function ($q) use ($request) {
+            $query = $q;
+            $query = $query->where(
+                [
+                    ['descripcion', 'LIKE', '%' . $request->filter . '%', "or"],
+                ]
+            );
+
+
+            return $query;
+        }); // Fin Filtrado por cliente
+
+        // ** Filtrado para string
+        $Productos->when($request->filter && is_numeric($request->filter), function ($q) use ($request) {
+            $query = $q;
+
+            $query = $query->where(
+                [
+                    ['id', 'LIKE', '%' . $request->filter, "or"],
+                ]
+            );
+            return $query;
+        }); // Fin Filtrado por cliente
+
+
+        if ($request->disablePaginate == 0) {
+            $Productos = $Productos->orderBy('created_at', 'desc')->paginate(15);
+        } else {
+            $Productos = $Productos->orderBy('created_at', 'desc')->get();
+        }
+
+        // dd(DB::getQueryLog());
+
+        if (count($Productos) > 0) {
+            $response = $Productos;
+        }
+
+
 
 
         return response()->json($response, $status);

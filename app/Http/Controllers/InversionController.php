@@ -2,16 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Categoria;
-use App\Models\Cliente;
-use App\Models\Factura;
-use App\Models\Factura_Detalle;
 use App\Models\Inversion;
 use App\Models\InversionDetail;
-use App\Models\Producto;
-use App\Models\ProductoParaRegalo;
-use App\Models\RegalosFacturados;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -40,6 +32,10 @@ class InversionController extends Controller
         // ** Filtrado por rango de fechas 
         $inversiones->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
             return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        });
+
+        $inversiones->when($request->estado, function ($q) use ($request) {
+            return $q->where('estado', $request->estado);
         });
 
         // ** Filtrado por userID
@@ -185,8 +181,10 @@ class InversionController extends Controller
                 'costo_real_total' => $request['Totales']['costo_real'],
                 'ganancia_bruta_total' => $request['Totales']['ganancia_bruta'],
                 'comision_vendedor_total' => $request['Totales']['comision_vendedor'],
+                'ganancia_total' => $request['Totales']['ganancia_total'],
                 'envio' => $request['InversionGeneral']['envio'],
                 'porcentaje_comision_vendedor' => $request['InversionGeneral']['porcentaje_comision_vendedor'],
+                'estatus_cierre' => 0,
 
             ]);
             foreach ($request['InversionGeneral']['inversion'] as $inversionDetail) {
@@ -270,9 +268,39 @@ class InversionController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit($id, Request $request)
     {
-        //
+        $response = [];
+        $status = 400;
+        // dd($request->all());
+        if (is_numeric($id)) {
+            $Inversion =  Inversion::find($id);
+
+            if ($Inversion) {
+
+                $valuesUpdate = [];
+                $valuesRequested = $request->all();
+
+                foreach ($valuesRequested as $key => $valueRq) {
+                    $valuesUpdate[$key] = $valueRq;
+                }
+
+                $InversionUpdate = $Inversion->update($valuesUpdate);
+
+                if ($InversionUpdate) {
+                    $response[] = 'La inversión fue cerrada con exito.';
+                    $status = 200;
+                } else {
+                    $response[] = 'Error al cerrar la inversión.';
+                }
+            } else {
+                $response[] = "La inversión no existe.";
+            }
+        } else {
+            $response[] = "El Valor de Id debe ser númerico.";
+        }
+
+        return response()->json($response, $status);
     }
 
     /**
@@ -307,8 +335,10 @@ class InversionController extends Controller
                     'costo_real_total' => $request['Totales']['costo_real'],
                     'ganancia_bruta_total' => $request['Totales']['ganancia_bruta'],
                     'comision_vendedor_total' => $request['Totales']['comision_vendedor'],
+                    'ganancia_total' => $request['Totales']['ganancia_total'],
                     'envio' => $request['InversionGeneral']['envio'],
                     'porcentaje_comision_vendedor' => $request['InversionGeneral']['porcentaje_comision_vendedor'],
+                    'estatus_cierre' => $request['InversionGeneral']['porcentaje_comision_vendedor'],
                 ]);
 
                 foreach ($request['InversionGeneral']['inversion'] as $inversionDetail) {
@@ -334,39 +364,14 @@ class InversionController extends Controller
                         'comision_vendedor' => $inversionDetail['comision_vendedor'],
                     ]);
                 }
-    
-
                 DB::commit();
+                $response[] = "Modificación realizada";
+                $status = 200;
             } catch (\Exception $e) {
                 DB::rollback();
                 // dd($e);
                 return response()->json(["mensaje" =>  $e->getMessage()], 400);
             }
-            // if ($productoRegalo) {
-            //     $validation = Validator::make($request->all(), [
-            //         'cantidad' => 'required|numeric',
-            //     ]);
-
-            //     if ($validation->fails()) {
-            //         $response[] = $validation->errors();
-            //     } else {
-
-
-            //         $productoUpdate = $productoRegalo->update([
-            //             'cantidad' => $request['cantidad'],
-            //         ]);
-
-
-            //         if ($productoUpdate) {
-            //             $response[] = 'El regalo fue modificado con exito.';
-            //             $status = 200;
-            //         } else {
-            //             $response[] = 'Error al modificar los datos.';
-            //         }
-            //     }
-            // } else {
-            //     $response[] = "El regalo no existe.";
-            // }
         } else {
             $response[] = "El Valor de Id debe ser numerico.";
         }
@@ -386,24 +391,31 @@ class InversionController extends Controller
         $status = 400;
 
         if (is_numeric($id)) {
-            $regalo =  ProductoParaRegalo::find($id);
+            $Inversion =  Inversion::find($id);
 
-            if ($regalo) {
-                $regaloDelete = $regalo->update([
+            if ($Inversion) {
+                $InversionDetail = InversionDetail::where([
+                    ["inversion_id", $Inversion->id],
+                ]);
+                // $Inversion->inversion_detalle_delete()
+                $InversionDetailUpdate = $InversionDetail->update([
+                    'estado' => 0,
+                ]);
+                $InversionUpdate = $Inversion->update([
                     'estado' => 0,
                 ]);
 
-                if ($regaloDelete) {
-                    $response[] = 'El regalo fue eliminado con exito.';
+                if ($InversionUpdate) {
+                    $response[] = 'La inversión fue eliminado con exito.';
                     $status = 200;
                 } else {
-                    $response[] = 'Error al eliminar el regalo.';
+                    $response[] = 'Error al eliminar la inversión.';
                 }
             } else {
-                $response[] = "El regalo no existe.";
+                $response[] = "La inversión no existe.";
             }
         } else {
-            $response[] = "El Valor de Id debe ser numerico.";
+            $response[] = "El Valor de Id debe ser númerico.";
         }
 
         return response()->json($response, $status);

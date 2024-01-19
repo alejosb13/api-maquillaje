@@ -172,9 +172,9 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('configuracion/taza-cambio/factura/{id}', [ConfiguracionController::class, 'getTazaCambioFactura']);
 
     Route::get('configuracion/refresh-indice', [DashboardController::class, 'refresIndice']);
-
     
     Route::resource('finanzas/inversion', InversionController::class);
+    
 });
 
 
@@ -184,6 +184,7 @@ Route::get('list/recibos', [ListadosPaginasController::class, 'recibosCreditosLi
 Route::get('list/abonos', [ListadosPaginasController::class, 'abonosCreditosList']);
 Route::get('list/clientes', [ListadosPaginasController::class, 'clientesList']);
 Route::get('list/productos-clientes', [ListadosPaginasController::class, 'FacturaDetailClientList']);
+Route::get('list/productos', [ListadosPaginasController::class, 'ProductosList']);
 
 Route::get('configuracion/crons', function () {
     Artisan::call('schedule:run');

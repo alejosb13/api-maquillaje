@@ -23,6 +23,8 @@ class Inversion extends Model
         "costo_real_total",
         "ganancia_bruta_total",
         "comision_vendedor_total",
+        "ganancia_total",
+        "estatus_cierre",
 
         "estado",
     ];

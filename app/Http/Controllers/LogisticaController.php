@@ -2,15 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Categoria;
 use App\Models\Cliente;
-use App\Models\ClientesReactivados;
-use App\Models\Factura;
-use App\Models\Frecuencia;
 use App\Models\Producto;
-use App\Models\Recibo;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 

@@ -38,6 +38,7 @@ class CreateInversionDetailsTable extends Migration
             $table->double('costo_real', 16, 2);
             $table->double('ganancia_bruta', 16, 2);
             $table->double('comision_vendedor', 16, 2);
+            $table->integer("producto_insertado")->length(1)->default(0);
 
             $table->integer("estado")->length(1)->default(1);
             $table->timestamps();

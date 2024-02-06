@@ -14,6 +14,7 @@ use App\Http\Controllers\FacturaDetallesController;
 use App\Http\Controllers\FacturaHistorial;
 use App\Http\Controllers\FrecuenciaController;
 use App\Http\Controllers\FrecuenciasFacturasController;
+use App\Http\Controllers\ImportacionController;
 use App\Http\Controllers\InversionController;
 use App\Http\Controllers\ListadosPaginasController;
 use App\Http\Controllers\LogisticaController;
@@ -172,9 +173,11 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('configuracion/taza-cambio/factura/{id}', [ConfiguracionController::class, 'getTazaCambioFactura']);
 
     Route::get('configuracion/refresh-indice', [DashboardController::class, 'refresIndice']);
-    
+
     Route::resource('finanzas/inversion', InversionController::class);
-    
+    Route::get('finanzas/inversion-producto/save', [InversionController::class, 'insertarProductos']);
+    Route::get('finanzas/inversion-importacion', [InversionController::class, 'inversionToImportacion']);
+    Route::resource('finanzas/importacion', ImportacionController::class);
 });
 
 
@@ -188,7 +191,7 @@ Route::get('list/productos', [ListadosPaginasController::class, 'ProductosList']
 
 Route::get('configuracion/crons', function () {
     Artisan::call('schedule:run');
-   // Artisan::call('reset:categorys');
+    // Artisan::call('reset:categorys');
     echo Artisan::output();
 });
 
@@ -209,7 +212,7 @@ Route::get('configuracion/clear-cache', function () {
     echo Artisan::call('cache:clear');
     echo Artisan::call('route:clear');
 
-  //  Artisan::call('schedule:list');
+    //  Artisan::call('schedule:list');
     //echo Artisan::output();
 });
 

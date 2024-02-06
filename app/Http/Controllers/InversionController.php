@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Inversion;
 use App\Models\InversionDetail;
+use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -38,60 +39,20 @@ class InversionController extends Controller
             return $q->where('estado', $request->estado);
         });
 
-        // ** Filtrado por userID
-        // $clientes->when($request->userId && $request->userId != 0, function ($q) use ($request) {
-        //     $query = $q;
-        //     // vendedor
-        //     // supervisor
-        //     // administrador
-
-        //     $user = User::select("*")
-        //         // ->where('estado', 1)
-        //         ->where('id', $request->userId)
-        //         ->first();
-
-        //     // print_r( $request->userId);
-        //     if (!$user) {
-        //         return $query;
-        //     }
-
-        //     return $query->where('user_id', $user->id);
-        // });
-
-
         // filtrados para campos numericos
-        // $clientes->when($request->filter && is_numeric($request->filter), function ($q) use ($request) {
-        //     $query = $q;
-        //     // id de recibos 
-        //     $filterSinNumeral = str_replace("#", "", $request->filter);
+        $inversiones->when($request->filter && is_numeric($request->filter), function ($q) use ($request) {
+            $query = $q;
+            // id de recibos 
+            $query = $query->where(
+                [
+                    ['id', 'LIKE', '%' . $request->filter . '%', "or"],
+                    ['numero_seguimiento', 'LIKE', '%' . $request->filter . '%', "or"],
+                ]
+            );
 
-        //     $query = $query->where('id', 'LIKE', '%' . $filterSinNumeral . '%');
+            return $query;
+        }); // Fin Filtrado
 
-        //     return $query;
-        // }); // Fin Filtrado
-
-
-        // ** Filtrado para string
-        // $clientes->when($request->filter && !is_numeric($request->filter), function ($q) use ($request) {
-        //     $query = $q;
-
-        //     // nombre cliente y empresa
-        //     // $query = $query->where('nombreCompleto', 'LIKE', '%' . $request->filter . '%',"or")
-        //     //     ->where('nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or")
-        //     //     ->where('direccion_casa', 'LIKE', '%' . $request->filter . '%',"or");
-        //     $query = $query->where(
-        //         [
-        //             ['nombreCompleto', 'LIKE', '%' . $request->filter . '%', "or"],
-        //             ['nombreEmpresa', 'LIKE', '%' . $request->filter . '%', "or"],
-        //             ['direccion_casa', 'LIKE', '%' . $request->filter . '%', "or"],
-        //         ]
-        //     );
-        //     //     ->where('nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or")
-        //     //     ->where('direccion_casa', 'LIKE', '%' . $request->filter . '%',"or");
-
-
-        //     return $query;
-        // }); // Fin Filtrado por cliente
 
         if ($request->disablePaginate == 0) {
             $inversiones = $inversiones->orderBy('created_at', 'desc')->paginate(15);
@@ -170,8 +131,17 @@ class InversionController extends Controller
 
         try {
             DB::beginTransaction(); // inicio los transaccitions luego de acabar las validaciones al cliente
+            // $ultimoId = Inversion::latest('id')->first()->id  + 1;
+            $ultimoId = Inversion::latest('id')->first();
+            if ($ultimoId) {
+                $ultimoId = $ultimoId->id  + 1;
+            } else {
+                $ultimoId = 1;
+            }
+            // dd(str_pad($ultimoId,  4, "0", STR_PAD_LEFT));
             $Inversion = Inversion::create([
                 'user_id' => $request['userId'],
+                'numero_seguimiento' =>  str_pad($ultimoId,  4, "0", STR_PAD_LEFT),
                 'cantidad_total' => $request['Totales']['cantidad'],
                 'costo' => $request['Totales']['costo'],
                 'peso_porcentual_total' => $request['Totales']['peso_porcentual'],
@@ -184,6 +154,7 @@ class InversionController extends Controller
                 'ganancia_total' => $request['Totales']['ganancia_total'],
                 'envio' => $request['InversionGeneral']['envio'],
                 'porcentaje_comision_vendedor' => $request['InversionGeneral']['porcentaje_comision_vendedor'],
+                'producto_insertado' => 0,
                 'estatus_cierre' => 0,
 
             ]);
@@ -327,6 +298,7 @@ class InversionController extends Controller
                 $Inversion->update([
                     'user_id' => $request['userId'],
                     'cantidad_total' => $request['Totales']['cantidad'],
+                    'numero_seguimiento' =>  str_pad($id,  4, "0", STR_PAD_LEFT),
                     'costo' => $request['Totales']['costo'],
                     'peso_porcentual_total' => $request['Totales']['peso_porcentual'],
                     'costo_total' => $request['Totales']['costo_total'],
@@ -339,6 +311,7 @@ class InversionController extends Controller
                     'envio' => $request['InversionGeneral']['envio'],
                     'porcentaje_comision_vendedor' => $request['InversionGeneral']['porcentaje_comision_vendedor'],
                     'estatus_cierre' => $request['InversionGeneral']['porcentaje_comision_vendedor'],
+                    // 'producto_insertado' => $request['InversionGeneral']['producto_insertado'],
                 ]);
 
                 foreach ($request['InversionGeneral']['inversion'] as $inversionDetail) {
@@ -417,6 +390,120 @@ class InversionController extends Controller
         } else {
             $response[] = "El Valor de Id debe ser númerico.";
         }
+
+        return response()->json($response, $status);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function insertarProductos(Request $request)
+    {
+        $response = [];
+        $status = 400;
+        // dd($request->all());
+
+        $Inversion =  Inversion::find($request->id_inversion);
+
+        if ($Inversion) {
+            try {
+
+                DB::beginTransaction(); // inicio los transaccitions 
+
+                // 1 - busco el producto de inversion
+                $InversionDetail = InversionDetail::find($request->id_inversion_detail);
+
+                // 2- busco el producto basado en el codigo de inversion y guardo
+                $producto =  Producto::find($InversionDetail->codigo);
+                $producto->stock = $producto->stock + $InversionDetail->cantidad;
+                $producto->precio = $InversionDetail->precio_venta;
+                $producto->save();
+
+                // 3- aviso a la inversion que ya esta cargado el producto en inventario                
+                $InversionUpdate = $InversionDetail->update([
+                    'producto_insertado' => $request->producto_insertado,
+                ]);
+
+                DB::commit();
+                $response[] = "Producto insertado";
+                $status = 200;
+            } catch (\Exception $e) {
+                DB::rollback();
+                // dd($e);
+                return response()->json(["mensaje" =>  $e->getMessage()], 400);
+            }
+        } else {
+            $response[] = "La inversión no existe.";
+        }
+
+
+        return response()->json($response, $status);
+    }
+
+    public function inversionToImportacion(Request $request)
+    {
+        // dd($request->all());
+        $response = [];
+        $status = 200;
+
+        // $dateIni = empty($request->dateIni) ? Carbon::now() : Carbon::parse($request->dateIni);
+        // $dateFin = empty($request->dateFin) ? Carbon::now() : Carbon::parse($request->dateFin);
+
+        // DB::enableQueryLog();
+
+        $inversiones =  Inversion::query();
+
+        // ** Filtrado por rango de fechas 
+        // $inversiones->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
+        //     return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        // });
+
+        // $inversiones->when($request->estado, function ($q) use ($request) {
+        //     return $q->where('estado', $request->estado);
+        // });
+
+        $inversiones->when($request->import, function ($q) use ($request) {
+            $q->select(DB::raw('inversions.*'));
+            $q->leftJoin('importacions', 'inversions.id', '=', 'importacions.inversion_id');
+            return $q->whereNull("importacions.id");
+        });
+
+        // filtrados para campos numericos
+        $inversiones->when($request->filter && is_numeric($request->filter), function ($q) use ($request) {
+            $query = $q;
+            // id de recibos 
+            $query = $query->where(
+                [
+                    ['inversions.id', 'LIKE', '%' . $request->filter . '%', "or"],
+                    ['inversions.numero_seguimiento', 'LIKE', '%' . $request->filter . '%', "or"],
+                ]
+            );
+
+            return $query;
+        }); // Fin Filtrado
+
+        if ($request->disablePaginate == 0) {
+            $inversiones = $inversiones->orderBy('importacions.created_at', 'desc')->paginate(15);
+        } else {
+            $inversiones = $inversiones->orderBy('importacions.created_at', 'desc')->get();
+        }
+
+        // dd(DB::getQueryLog());
+
+        if (count($inversiones) > 0) {
+            foreach ($inversiones as $inversion) {
+                $inversion->user;
+                $inversion->inversion_detalle;
+            }
+
+            $response[] = $inversiones;
+        }
+
+        $response = $inversiones;
+
 
         return response()->json($response, $status);
     }

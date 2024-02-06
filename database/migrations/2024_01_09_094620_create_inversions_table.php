@@ -21,6 +21,7 @@ class CreateInversionsTable extends Migration
             $table->unsignedBigInteger("user_id");
             $table->foreign("user_id")->references("id")->on("users");
 
+            $table->string("numero_seguimiento",120);
             $table->double("cantidad_total", 16, 2);
             $table->double("costo", 16, 2);
             $table->double("peso_porcentual_total", 16, 2);
@@ -37,6 +38,7 @@ class CreateInversionsTable extends Migration
 
             $table->integer("estatus_cierre")->length(1)->default(1);
 
+            // $table->integer("producto_insertado")->length(1)->default(0);
             $table->integer("estado")->length(1)->default(1);
 
             $table->timestamps();

@@ -162,6 +162,10 @@ class FacturaController extends Controller
             // dd(json_encode($model_has_roles));
             if ($model_has_roles->role_id != 2) { // si no es admin que valide lista negra
                 // verifico si el cliente esta en lista negra
+                if ($cliente->categoria->tipo == "DP") {
+                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos. Pertenece a la categoria depurado"], 400);
+                }
+
                 if ($cliente->categoria->tipo == "LN") {
                     return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos. "], 400);
                 }

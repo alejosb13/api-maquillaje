@@ -11,6 +11,7 @@ class Inversion extends Model
 
     protected $fillable = [
         "user_id",
+        "numero_seguimiento",
         "numero_serial",
         "envio",
         "porcentaje_comision_vendedor",

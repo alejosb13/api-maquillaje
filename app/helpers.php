@@ -1788,12 +1788,15 @@ function clientesInactivosQuery($request)
             SELECT
                 c.id AS cliente_id,
                 c.user_id AS user_id,
+                cat.tipo,
+                cat.descripcion,
                 COUNT(c.id) AS cantidad_factura,
                 MAX(f.status_pagado_at) AS last_date_finalizada,
                 SUM(if(f.status_pagado = 1, 1, 0)) AS cantidad_finalizadas
             FROM clientes c
             INNER JOIN facturas f ON c.id = f.cliente_id
-            WHERE  f.`status` = 1
+            INNER JOIN categorias cat ON c.categoria_id = cat.id 
+            WHERE  f.`status` = 1 AND c.estado = 1 AND cat.tipo !='DP'
             GROUP BY c.id
             ORDER BY c.id ASC
         )q ON c.id = q.cliente_id

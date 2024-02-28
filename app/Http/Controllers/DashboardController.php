@@ -101,6 +101,7 @@ class DashboardController extends Controller
             "ventas_mes_meta" => decimal($resumen["ventas_mes_meta"]),
             "ventas_mes_porcentaje" => decimal($resumen["ventas_mes_porcentaje"]),
         ];
+        // print_r($dataIndice);
 
         if (IndicesDashboard::where('user_id', $payload->userId)->exists()) { // si existe en la tabla hago modificacion de lo contrario agrego
             IndicesDashboard::where('user_id', $payload->userId)->update($dataIndice);
@@ -171,9 +172,11 @@ class DashboardController extends Controller
         $totalAbonos = 0;
         $contadorUsers = 0;
         foreach ($users as $usuario) {
-            $responserNewrecuperacionQuery = newrecuperacionQuery($usuario, $request->dateIni, $request->dateFin);
-
-            if ($responserNewrecuperacionQuery["recuperacionTotal"] > 0) {
+            if ($usuario->id != 32) {
+                $responserNewrecuperacionQuery = newrecuperacionQuery($usuario, $request->dateIni, $request->dateFin);
+                // print_r(json_encode($responserNewrecuperacionQuery));
+                if ($responserNewrecuperacionQuery["recuperacionTotal"] > 0) {
+                }
                 $totalMetas += $responserNewrecuperacionQuery["recuperacionTotal"];
                 $totalAbonos += $responserNewrecuperacionQuery["abonosTotalLastMount"];
                 $contadorUsers++;
@@ -183,8 +186,8 @@ class DashboardController extends Controller
         $response["recuperacionMensual"] = [
             "abonosTotalLastMount" => $totalAbonos,
             "recuperacionTotal" => $totalMetas,
+            "recuperacionPorcentaje" => $totalMetas == 0 ? 0 : decimal(($totalAbonos / $totalMetas) * 100),
             "contadorUsers" => $contadorUsers,
-            "recuperacionPorcentaje" => decimal(($totalAbonos / $totalMetas) * 100),
         ];
         // Fin Recuperacion mensual
 

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use Exception;
 
 class InversionController extends Controller
 {
@@ -131,6 +132,15 @@ class InversionController extends Controller
 
         try {
             DB::beginTransaction(); // inicio los transaccitions luego de acabar las validaciones al cliente
+
+            foreach ($request['InversionGeneral']['inversion'] as $inversionDetail) {
+                if($inversionDetail['isNew']){
+                    if ($this->existProduct($inversionDetail['producto'])) {
+                        return response()->json(["mensaje" => "Producto existente"], 400);
+                    }
+                }
+            }
+
             // $ultimoId = Inversion::latest('id')->first()->id  + 1;
             $ultimoId = Inversion::latest('id')->first();
             if ($ultimoId) {
@@ -159,6 +169,8 @@ class InversionController extends Controller
 
             ]);
             foreach ($request['InversionGeneral']['inversion'] as $inversionDetail) {
+                // dd($inversionDetail['isNew'] ? 1 : 0);
+
                 $InversionDetail = InversionDetail::create([
                     'inversion_id' => $Inversion->id,
                     'codigo' => $inversionDetail['codigo'],
@@ -174,11 +186,15 @@ class InversionController extends Controller
                     'costo_total' => $inversionDetail['costo_total'],
                     'subida_ganancia' => $inversionDetail['subida_ganancia'],
                     'precio_venta' => $inversionDetail['precio_venta'],
+                    'margen_ganancia' => $inversionDetail['margen_ganancia'],
                     'venta' => $inversionDetail['venta'],
                     'venta_total' => $inversionDetail['venta_total'],
                     'costo_real' => $inversionDetail['costo_real'],
                     'ganancia_bruta' => $inversionDetail['ganancia_bruta'],
                     'comision_vendedor' => $inversionDetail['comision_vendedor'],
+                    'isNew' => $inversionDetail['isNew'] ? 1 : 0,
+                    'linea' => $inversionDetail['linea'],
+                    'modelo' => $inversionDetail['modelo'],
                 ]);
             }
 
@@ -293,6 +309,14 @@ class InversionController extends Controller
             try {
                 DB::beginTransaction(); // inicio los transaccitions 
 
+                foreach ($request['InversionGeneral']['inversion'] as $inversionDetail) {
+                    if($inversionDetail['isNew']){
+                        if ($this->existProduct($inversionDetail['producto'])) {
+                            return response()->json(["mensaje" => "Producto existente"], 400);
+                        }
+                    }
+                }
+
                 $Inversion =  Inversion::find($id);
                 $Inversion->inversion_detalle_delete(); // Elimino las columnas relacionadas a la inversion
                 $Inversion->update([
@@ -330,11 +354,15 @@ class InversionController extends Controller
                         'costo_total' => $inversionDetail['costo_total'],
                         'subida_ganancia' => $inversionDetail['subida_ganancia'],
                         'precio_venta' => $inversionDetail['precio_venta'],
+                        'margen_ganancia' => $inversionDetail['margen_ganancia'],
                         'venta' => $inversionDetail['venta'],
                         'venta_total' => $inversionDetail['venta_total'],
                         'costo_real' => $inversionDetail['costo_real'],
                         'ganancia_bruta' => $inversionDetail['ganancia_bruta'],
                         'comision_vendedor' => $inversionDetail['comision_vendedor'],
+                        'isNew' => $inversionDetail['isNew'] ? 1 : 0,
+                        'linea' => $inversionDetail['linea'],
+                        'modelo' => $inversionDetail['modelo'],
                     ]);
                 }
                 DB::commit();
@@ -413,17 +441,37 @@ class InversionController extends Controller
 
                 DB::beginTransaction(); // inicio los transaccitions 
 
-                // 1 - busco el producto de inversion
+                // busco el producto de inversion
                 $InversionDetail = InversionDetail::find($request->id_inversion_detail);
+                // valido si es nuevo 
+                if ($InversionDetail->isNew == 1) {
 
-                // 2- busco el producto basado en el codigo de inversion y guardo
-                $producto =  Producto::find($InversionDetail->codigo);
-                $producto->stock = $producto->stock + $InversionDetail->cantidad;
-                $producto->precio = $InversionDetail->precio_venta;
-                $producto->save();
+                    // agrego el producto si es nuevo
+                    $newProducto = Producto::create([
+                        'marca' => $InversionDetail->marca,
+                        'modelo' =>  $InversionDetail->modelo,
+                        'stock' => $InversionDetail->cantidad,
+                        'precio' => $InversionDetail->precio_venta,
+                        // 'comision' => $request['comision'],
+                        'linea' => $InversionDetail->linea,
+                        'descripcion' => $InversionDetail->producto,
+                        'estado' => 1,
+                    ]);
+                    $InversionDetail->codigo = $newProducto->id;
+                }
 
-                // 3- aviso a la inversion que ya esta cargado el producto en inventario                
-                $InversionUpdate = $InversionDetail->update([
+                if ($InversionDetail->isNew == 0) {
+                    // busco el producto basado en el codigo de inversion y guardo
+                    //si ya existe actualizo precio y stock
+                    $producto =  Producto::find($InversionDetail->codigo);
+                    $producto->stock = $producto->stock + $InversionDetail->cantidad;
+                    $producto->precio = $InversionDetail->precio_venta;
+                    $producto->save();
+                }
+                // dd($InversionDetail);
+
+                // aviso a la inversion que ya esta cargado el producto en inventario                
+                $InversionDetail->update([
                     'producto_insertado' => $request->producto_insertado,
                 ]);
 
@@ -506,5 +554,16 @@ class InversionController extends Controller
 
 
         return response()->json($response, $status);
+    }
+
+    public function existProduct($name)
+    {
+        $producto = Producto::where(
+            [
+                ['descripcion', 'LIKE', '%' . $name . '%', "or"],
+            ]
+        )->first();
+
+        return $producto ? true : false;
     }
 }

@@ -1964,7 +1964,7 @@ function mora60_90Query($request)
             // if ($fechaActual->gte($fechaPasado60DiasVencimiento) && $fechaActual->lte($fechaPasado90DiasVencimiento)) {
             if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaActual) >= 60) {
                 $factura->user;
-                $factura->cliente;
+                $factura->cliente->categoria;
                 $factura->vencimiento60  = $fechaPasado60DiasVencimiento;
                 $factura->vencimiento90  = $fechaPasado90DiasVencimiento;
 
@@ -1973,7 +1973,9 @@ function mora60_90Query($request)
                 // $factura->diferenciaDias = Carbon::parse($factura->fecha_vencimiento)->diffInDays($fechaActual);
                 $factura->diferenciaDias = Carbon::parse($factura->created_at)->diffInDays($fechaActual);
 
-                array_push($response["factura"], $factura);
+                if( $factura->cliente->categoria->tipo != "DP"){// si no pertenece a depurados lo agrego
+                    array_push($response["factura"], $factura);
+                }
             }
         }
     }

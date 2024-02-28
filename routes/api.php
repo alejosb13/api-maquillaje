@@ -94,7 +94,6 @@ Route::get('script/actualizarPrecioFactura/{id}', [ScriptController::class, 'Act
 Route::get('script/validar-meta-recuperacion', [ScriptController::class, 'validarMetaRecuperacion']);
 
 
-
 Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supervisor', 'cierre']], function () {
     Route::post('logistica/cartera-date', [LogisticaController::class, 'carteraDate']);
     Route::post('logistica/recibo-date', [LogisticaController::class, 'reciboDate']);
@@ -174,10 +173,10 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
 
     Route::get('configuracion/refresh-indice', [DashboardController::class, 'refresIndice']);
 
-    Route::resource('finanzas/inversion', InversionController::class);
-    Route::get('finanzas/inversion-producto/save', [InversionController::class, 'insertarProductos']);
     Route::get('finanzas/inversion-importacion', [InversionController::class, 'inversionToImportacion']);
     Route::resource('finanzas/importacion', ImportacionController::class);
+    Route::get('finanzas/inversion-producto/save', [InversionController::class, 'insertarProductos']);
+    Route::resource('finanzas/inversion', InversionController::class);
 });
 
 

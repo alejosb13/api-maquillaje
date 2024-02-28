@@ -74,12 +74,12 @@ class ReciboController extends Controller
 
             if ($request['min'] < $request['max']) {
                 if ($this->validNumberRange($request['min'], $request['max'], false)) {
-                    // $response = Recibo::create([
-                    //     'max' => $request['max'],
-                    //     'min' => $request['min'],
-                    //     'user_id' => $request['user_id'],
-                    //     'estado' => $request['estado'],
-                    // ]);
+                    $response = Recibo::create([
+                        'max' => $request['max'],
+                        'min' => $request['min'],
+                        'user_id' => $request['user_id'],
+                        'estado' => $request['estado'],
+                    ]);
                     $error = 201;
                 } else {
                     $response[] = array('mensaje' => "El rango numerico del recibo ya coincide con uno existente.");
@@ -334,12 +334,11 @@ class ReciboController extends Controller
                 ['id', "!=", $id],
                 ['estado', "=", 1],
             ])->whereBetween('max', [$min, $max])->get();
-        
         } else {
             $minimo = DB::table('recibos')->where([
                 ['estado', "=", 1],
             ])->whereBetween('min', [$min, $max])->get();
-            
+
             $maximo = DB::table('recibos')->where([
                 ['estado', "=", 1],
             ])->whereBetween('max', [$min, $max])->get();

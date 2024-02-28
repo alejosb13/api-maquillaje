@@ -27,9 +27,13 @@ class InversionDetail extends Model
         "venta_total",
         "costo_real",
         "ganancia_bruta",
+        "margen_ganancia",
         "comision_vendedor",
         "producto_insertado",
         "estado",
+        "linea",
+        "modelo",
+        "isNew",
     ];
 
 }

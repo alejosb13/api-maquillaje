@@ -158,60 +158,60 @@ class FacturaController extends Controller
             //     ["id", "=", $request->userId]
             // ])->first();
             // dd(json_encode($request['user_id']));
-            $model_has_roles = DB::table('model_has_roles')->where('model_id', $request['user_id'])->first(); // traigo el rol
-            // dd(json_encode($model_has_roles));
-            if ($model_has_roles->role_id != 2) { // si no es admin que valide lista negra
-                // verifico si el cliente esta en lista negra
-                if ($cliente->categoria->tipo == "DP") {
-                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos. Pertenece a la categoria depurado"], 400);
-                }
+            // $model_has_roles = DB::table('model_has_roles')->where('model_id', $request['user_id'])->first(); // traigo el rol
+            // // dd(json_encode($model_has_roles));
+            // if ($model_has_roles->role_id != 2) { // si no es admin que valide lista negra
+            //     // verifico si el cliente esta en lista negra
+  
+            // }
 
-                if ($cliente->categoria->tipo == "LN") {
-                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos. "], 400);
-                }
+            if ($cliente->categoria->tipo == "DP") {
+                return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos. Pertenece a la lista depuración."], 400);
+            }
 
-                if (count($facturasMora60_90) > 0) {
-                    foreach ($facturasMora60_90 as $facturaMora60_90) { // valido todas sus facturas, para ver si tiene una en mora
-                        $fechaPasado60DiasVencimiento = Carbon::parse($facturaMora60_90->created_at)->addDays(60)->toDateTimeString();
-                        
-                        if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaHoy) >= 60) {
-                            $categoriaListaNegra =  Categoria::where([
-                                ['tipo', '=', "LN"],
-                                ['estado', '=', 1]
-                            ])->first();
+            if ($cliente->categoria->tipo == "LN") {
+                return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos. Pertenece a lista negra. "], 400);
+            }
 
-                            $cliente->categoria_id = $categoriaListaNegra->id; // agrego a lista negra por estas en mora de 60 dias o mas
-                            $cliente->save();
+            if (count($facturasMora60_90) > 0) {
+                foreach ($facturasMora60_90 as $facturaMora60_90) { // valido todas sus facturas, para ver si tiene una en mora
+                    $fechaPasado60DiasVencimiento = Carbon::parse($facturaMora60_90->created_at)->addDays(60)->toDateTimeString();
+                    
+                    if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaHoy) >= 60) {
+                        $categoriaListaNegra =  Categoria::where([
+                            ['tipo', '=', "LN"],
+                            ['estado', '=', 1]
+                        ])->first();
 
-                            return response()->json(["mensaje" => "Este cliente posee alguna factura en mora de 60-90 dias", "cliente" => $cliente], 400);
-                        }
+                        $cliente->categoria_id = $categoriaListaNegra->id; // agrego a lista negra por estas en mora de 60 dias o mas
+                        $cliente->save();
+
+                        return response()->json(["mensaje" => "Este cliente posee alguna factura en mora de 60-90 dias", "cliente" => $cliente], 400);
                     }
                 }
             }
-
-
             $montoSaldoPorAcumular = $request['monto'] + $FacturasxClientexSinPagar;
             if ($cliente->categoria->condicion == 1) { // mayor que
                 if (!($montoSaldoPorAcumular > $cliente->categoria->monto_maximo)) { // si el saldo acumulado no es mayor que el monto de la categoria
-                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
+                    return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
                 }
             }
 
             if ($cliente->categoria->condicion == 2) { // menor que
                 if (!($montoSaldoPorAcumular < $cliente->categoria->monto_menor)) { // si el saldo acumulado no es menor que el monto de la categoria
-                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
+                    return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
                 }
             }
 
             if ($cliente->categoria->condicion == 3) { // menor o igual que
                 if (!($montoSaldoPorAcumular <= $cliente->categoria->monto_menor)) { // si el saldo acumulado no es menor o igual que el monto de la categoria
-                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
+                    return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
                 }
             }
 
             if ($cliente->categoria->condicion == 4) { // mayor o igual que
                 if (!($montoSaldoPorAcumular >= $cliente->categoria->monto_maximo)) { // si el saldo acumulado no es mayor o igual que el monto de la categoria
-                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
+                    return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
                 }
             }
 
@@ -220,7 +220,7 @@ class FacturaController extends Controller
                     !($montoSaldoPorAcumular >= $cliente->categoria->monto_menor &&
                         $montoSaldoPorAcumular <= $cliente->categoria->monto_maximo)
                 ) { // si el saldo acumulado no esta entre el monto menor y mayor de la categoria
-                    return response()->json(["mensaje" => "El credito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
+                    return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos."], 400);
                 }
             }
 

@@ -373,6 +373,21 @@ class ClienteController extends Controller
             return $query->where('user_id', $userId);
         });
 
+        // $clientes->when($request->saldo && $request->saldo == "false", function ($q) use ($userId) {
+        //     $query = $q;
+        //     $idClientesConSaldo = [];
+
+        //     $clientesSubQuery =  Cliente::where('estado', 1)->get();
+        //     foreach ($clientesSubQuery as $subQuerycliente) {
+        //         $responseDeuda = calcularDeudaFacturaCliente($subQuerycliente->id);
+        //         if ($responseDeuda["saldo_restante"] != 0) {
+        //             $idClientesConSaldo[] = $subQuerycliente->id;
+        //         }
+        //     }
+
+        //     return count($idClientesConSaldo) > 0 ? $query->wherein('id', $idClientesConSaldo) : $query;
+        // });
+
         $clientes->when($request->filter && !is_numeric($request->filter), function ($q) use ($request) {
 
             return $q->where('nombreCompleto', 'LIKE', '%' . $request->filter . '%');
@@ -385,17 +400,29 @@ class ClienteController extends Controller
         //dd( $clientes);
         if (count($clientes) > 0) {
             foreach ($clientes as $key => $cliente) {
+                
+                if($request->saldo && $request->saldo == "true"){                    
+                    $responseDeuda = calcularDeudaFacturaCliente($cliente->id);
+                    if ($responseDeuda["saldo_restante"] != 0) {
+                        // $idClientesConSaldo[] = $subQuerycliente->id;
+                        $cliente->saldo_restante = decimal($responseDeuda["saldo_restante"]);
+                        $cliente->categoria = $cliente->categoria;
+                        $response[] = $cliente;
+                        
+                    }
+                }else{
+                    $cliente->categoria = $cliente->categoria;
+                    $response[] = $cliente;
+                }
                 // dd($cliente->frecuencias);
                 // validarStatusPagadoGlobal($cliente->id);
                 // $clientes->frecuencia = $cliente->frecuencia;
-                $clientes->categoria = $cliente->categoria;
                 // $clientes->facturas = $cliente->facturas;
             }
 
-            $response[] = $clientes;
         }
 
-        return response()->json($clientes, $status);
+        return response()->json( $response, $status);
     }
 
     function calcularDeudaVendedorTodosClientesPorUsuario($userId)

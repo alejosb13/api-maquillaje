@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthenticationController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\CostosController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DevolucionFacturaController;
 use App\Http\Controllers\DevolucionProductoController;
@@ -178,6 +179,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('finanzas/inversion-producto/save', [InversionController::class, 'insertarProductos']);
     Route::resource('finanzas/inversion', InversionController::class);
 });
+Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
 
 
 Route::get('list/facturas', [ListadosPaginasController::class, 'facturasList']);

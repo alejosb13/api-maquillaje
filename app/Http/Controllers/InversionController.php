@@ -134,7 +134,7 @@ class InversionController extends Controller
             DB::beginTransaction(); // inicio los transaccitions luego de acabar las validaciones al cliente
 
             foreach ($request['InversionGeneral']['inversion'] as $inversionDetail) {
-                if($inversionDetail['isNew']){
+                if ($inversionDetail['isNew']) {
                     if ($this->existProduct($inversionDetail['producto'])) {
                         return response()->json(["mensaje" => "Producto existente"], 400);
                     }
@@ -310,7 +310,7 @@ class InversionController extends Controller
                 DB::beginTransaction(); // inicio los transaccitions 
 
                 foreach ($request['InversionGeneral']['inversion'] as $inversionDetail) {
-                    if($inversionDetail['isNew']){
+                    if ($inversionDetail['isNew']) {
                         if ($this->existProduct($inversionDetail['producto'])) {
                             return response()->json(["mensaje" => "Producto existente"], 400);
                         }
@@ -560,7 +560,7 @@ class InversionController extends Controller
     {
         $producto = Producto::where(
             [
-                ['descripcion', 'LIKE', '%' . $name . '%', "or"],
+                ['descripcion', "=", $name],
             ]
         )->first();
 

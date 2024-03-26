@@ -178,6 +178,9 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::resource('finanzas/importacion', ImportacionController::class);
     Route::get('finanzas/inversion-producto/save', [InversionController::class, 'insertarProductos']);
     Route::resource('finanzas/inversion', InversionController::class);
+    Route::post('finanzas/productos-vendidos', [CostosController::class, 'saveCostosVentas']);
+    Route::put('finanzas/productos-vendidos/{id}', [CostosController::class, 'updateCostosVentas']);
+    Route::delete('finanzas/productos-vendidos/{id}', [CostosController::class, 'deleteCostoVenta']);
 });
 Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
 

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Importacion;
-use Carbon\Carbon;
+use App\Models\Gasto;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 
-class ImportacionController extends Controller
+class GastoController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -25,25 +25,24 @@ class ImportacionController extends Controller
 
         // DB::enableQueryLog();
 
-        $importaciones =  Importacion::query();
+        $gastos =  Gasto::query();
 
         // ** Filtrado por rango de fechas 
-        $importaciones->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
+        $gastos->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
             return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
         });
 
-        $importaciones->when($request->estado, function ($q) use ($request) {
+        $gastos->when($request->estado, function ($q) use ($request) {
             return $q->where('estado', $request->estado);
         });
 
         // filtrados para campos numericos
-        $importaciones->when($request->filter && is_numeric($request->filter), function ($q) use ($request) {
+        $gastos->when($request->filter && !is_numeric($request->filter), function ($q) use ($request) {
             $query = $q;
             // id de recibos 
             $query = $query->where(
                 [
-                    ['id', 'LIKE', '%' . $request->filter . '%', "or"],
-                    ['numero_seguimiento', 'LIKE', '%' . $request->filter . '%', "or"],
+                    ['numero', 'LIKE', '%' . $request->filter . '%'],
                 ]
             );
 
@@ -52,23 +51,24 @@ class ImportacionController extends Controller
 
 
         if ($request->disablePaginate == 0) {
-            $importaciones = $importaciones->orderBy('created_at', 'desc')->paginate(15);
+            $gastos = $gastos->orderBy('created_at', 'desc')->paginate(15);
         } else {
-            $importaciones = $importaciones->orderBy('created_at', 'desc')->get();
+            $gastos = $gastos->orderBy('created_at', 'desc')->get();
         }
 
         // dd(DB::getQueryLog());
 
-        if (count($importaciones) > 0) {
-            foreach ($importaciones as $importacion) {
-                $importacion->inversion;
+        if (count($gastos) > 0) {
+            foreach ($gastos as $gasto) {
+                $gasto->typeValueString();
+                // $importacion->inversion;
                 // $importacion->inversion_detalle;
             }
 
-            $response[] = $importaciones;
+            $response[] = $gastos;
         }
 
-        $response = $importaciones;
+        $response = $gastos;
 
 
         return response()->json($response, $status);
@@ -95,34 +95,30 @@ class ImportacionController extends Controller
         $response = [];
         $status = 400;
 
-        $validation = Validator::make($request->all() ,[
-            'fecha_inversion' => 'required',
-            'numero_recibo' => 'required',
-            'numero_inversion' => 'required',
-            'monto_compra' => 'required|numeric',
+        $validation = Validator::make($request->all(), [
+            'tipo' => 'required',
+            'numero' => 'required',
             'conceptualizacion' => 'required',
-            'precio_envio' => 'required',
-            'inversion_id' => 'required',
+            'monto' => 'required|numeric',
+            'fecha_comprobante' => 'required',
         ]);
 
         // dd($request->all());
         // dd($validation->errors());
-        if($validation->fails()) {
+        if ($validation->fails()) {
             $response[] =  $validation->errors();
         } else {
 
-            $categoria = Importacion::create([
-                'fecha_inversion' => $request['fecha_inversion'],
-                'numero_recibo' => $request['numero_recibo'],
-                'numero_inversion' => $request['numero_inversion'],
-                'monto_compra' => $request['monto_compra'],
+            $Gasto = Gasto::create([
+                'tipo' => $request['tipo'],
+                'numero' => $request['numero'],
                 'conceptualizacion' => $request['conceptualizacion'],
-                'precio_envio' => $request['precio_envio'],
-                'inversion_id' => $request['inversion_id'],
+                'monto' => $request['monto'],
+                'fecha_comprobante' => $request['fecha_comprobante'],
                 'estado' => 1,
             ]);
 
-            $response['id'] =  $categoria->id;
+            $response['id'] =  $Gasto->id;
             $status = 201;
         }
         return response()->json($response, $status);
@@ -140,28 +136,26 @@ class ImportacionController extends Controller
         $status = 400;
         // $clienteEstado = 1; // Activo
 
-        if (is_numeric($id)) {
-
-            // if(!is_null($request['estado'])) $clienteEstado = $request['estado'];
-
-            // dd($request['estado']);
-            $Importacion =  Importacion::where([
-                ['id', '=', $id],
-                // ['estado', '=', $clienteEstado],
-            ])->first();
-
-            // $cliente =  Cliente::find($id);
-            if ($Importacion) {
-                // $Inversion->user;
-                $Importacion->inversion;
-
-                $response = $Importacion;
-                $status = 200;
-            } else {
-                $response[] = "La importación no existe o fue eliminada.";
-            }
-        } else {
+        if (!is_numeric($id)) {
             $response[] = "El Valor de Id debe ser numérico.";
+        }
+        // if(!is_null($request['estado'])) $clienteEstado = $request['estado'];
+
+        // dd($request['estado']);
+        $Gasto =  Gasto::where([
+            ['id', '=', $id],
+            // ['estado', '=', $clienteEstado],
+        ])->first();
+
+        // $cliente =  Cliente::find($id);
+        if ($Gasto) {
+            // $Inversion->user;
+            // $Gasto->inversion;
+
+            $response = $Gasto;
+            $status = 200;
+        } else {
+            $response[] = "El gasto no existe o fue eliminada.";
         }
 
         return response()->json($response, $status);
@@ -191,17 +185,15 @@ class ImportacionController extends Controller
         $status = 400;
 
         if (is_numeric($id)) {
-            $Importacion =  Importacion::find($id);
+            $Gasto =  Gasto::find($id);
 
-            if ($Importacion) {
+            if ($Gasto) {
                 $validation = Validator::make($request->all(), [
-                    'fecha_inversion' => 'required',
-                    'numero_recibo' => 'required',
-                    'numero_inversion' => 'required',
-                    'monto_compra' => 'required|numeric',
+                    'tipo' => 'required',
+                    'numero' => 'required',
                     'conceptualizacion' => 'required',
-                    'precio_envio' => 'required',
-                    'inversion_id' => 'required',
+                    'monto' => 'required|numeric',
+                    'fecha_comprobante' => 'required',
                 ]);
 
                 if ($validation->fails()) {
@@ -209,26 +201,25 @@ class ImportacionController extends Controller
                 } else {
 
                     // dd($request->all());
-                    $importacionUpdate = $Importacion->update([
-                        'fecha_inversion' => $request['fecha_inversion'],
-                        'numero_recibo' => $request['numero_recibo'],
-                        'numero_inversion' => $request['numero_inversion'],
-                        'monto_compra' => $request['monto_compra'],
+                    $GastoUpdate = $Gasto->update([
+                        'tipo' => $request['tipo'],
+                        'numero' => $request['numero'],
                         'conceptualizacion' => $request['conceptualizacion'],
-                        'precio_envio' => $request['precio_envio'],
-                        'inversion_id' => $request['inversion_id'],
+                        'monto' => $request['monto'],
+                        'fecha_comprobante' => $request['fecha_comprobante'],
+                        'estado' => 1,
                     ]);
 
 
-                    if ($importacionUpdate) {
-                        $response[] = 'Importación modificada con éxito.';
+                    if ($GastoUpdate) {
+                        $response[] = 'Gasto modificado con éxito.';
                         $status = 200;
                     } else {
                         $response[] = 'Error al modificar los datos.';
                     }
                 }
             } else {
-                $response[] = "El cliente no existe.";
+                $response[] = "El gasto no existe.";
             }
         } else {
             $response[] = "El Valor de Id debe ser numérico.";

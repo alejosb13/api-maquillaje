@@ -15,6 +15,7 @@ use App\Http\Controllers\FacturaDetallesController;
 use App\Http\Controllers\FacturaHistorial;
 use App\Http\Controllers\FrecuenciaController;
 use App\Http\Controllers\FrecuenciasFacturasController;
+use App\Http\Controllers\GastoController;
 use App\Http\Controllers\ImportacionController;
 use App\Http\Controllers\InversionController;
 use App\Http\Controllers\ListadosPaginasController;
@@ -181,8 +182,11 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::post('finanzas/productos-vendidos', [CostosController::class, 'saveCostosVentas']);
     Route::put('finanzas/productos-vendidos/{id}', [CostosController::class, 'updateCostosVentas']);
     Route::delete('finanzas/productos-vendidos/{id}', [CostosController::class, 'deleteCostoVenta']);
+    Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
+
+    Route::resource('finanzas/gastos', GastoController::class);
+
 });
-Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
 
 
 Route::get('list/facturas', [ListadosPaginasController::class, 'facturasList']);

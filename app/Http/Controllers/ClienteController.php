@@ -261,26 +261,32 @@ class ClienteController extends Controller
         $response = [];
         $status = 400;
 
-        if (is_numeric($id)) {
-            $cliente =  Cliente::find($id);
-
-            if ($cliente) {
-                $clienteDelete = $cliente->update([
-                    'estado' => 0,
-                ]);
-
-                if ($clienteDelete) {
-                    $response[] = 'El cliente fue eliminado con exito.';
-                    $status = 200;
-                } else {
-                    $response[] = 'Error al eliminar el cliente.';
-                }
-            } else {
-                $response[] = "El cliente no existe.";
-            }
-        } else {
-            $response[] = "El Valor de Id debe ser numerico.";
+        if (!is_numeric($id)) {
+            $response[] = "El Valor de Id debe ser numérico.";
+            return response()->json($response, $status);
         }
+
+
+        $cliente =  Cliente::find($id);
+
+        if (!$cliente) {
+            $response[] = "El cliente no existe.";
+            return response()->json($response, $status);
+        }
+        $clienteDelete = $cliente->update([
+            'estado' => $cliente->estado == 1 ? 0 : 1,
+        ]);
+
+        if ($clienteDelete) {
+            $response[] = 'El cliente fue eliminado con éxito.';
+
+            $response[] = $cliente ;
+            $status = 200;
+        } else {
+            $response[] = 'Error al eliminar el cliente.';
+        }
+
+
 
         return response()->json($response, $status);
     }
@@ -400,17 +406,16 @@ class ClienteController extends Controller
         //dd( $clientes);
         if (count($clientes) > 0) {
             foreach ($clientes as $key => $cliente) {
-                
-                if($request->saldo && $request->saldo == "true"){                    
+
+                if ($request->saldo && $request->saldo == "true") {
                     $responseDeuda = calcularDeudaFacturaCliente($cliente->id);
                     if ($responseDeuda["saldo_restante"] != 0) {
                         // $idClientesConSaldo[] = $subQuerycliente->id;
                         $cliente->saldo_restante = decimal($responseDeuda["saldo_restante"]);
                         $cliente->categoria = $cliente->categoria;
                         $response[] = $cliente;
-                        
                     }
-                }else{
+                } else {
                     $cliente->categoria = $cliente->categoria;
                     $response[] = $cliente;
                 }
@@ -419,10 +424,9 @@ class ClienteController extends Controller
                 // $clientes->frecuencia = $cliente->frecuencia;
                 // $clientes->facturas = $cliente->facturas;
             }
-
         }
 
-        return response()->json( $response, $status);
+        return response()->json($response, $status);
     }
 
     function calcularDeudaVendedorTodosClientesPorUsuario($userId)

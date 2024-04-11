@@ -527,7 +527,12 @@ class ListadosPaginasController extends Controller
 
         // DB::enableQueryLog();
 
-        $clientes =  Cliente::where($parametros);
+        $clientes =  Cliente::query();
+
+        // ** Filtrado por Estado 
+        $clientes->when(isset($request->estado) && $request->estado != 2, function ($q) use ($request) {
+            return $q->where('estado', $request->estado);
+        });
 
         // ** Filtrado por rango de fechas 
         $clientes->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {

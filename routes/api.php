@@ -185,8 +185,9 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
 
     Route::resource('finanzas/gastos', GastoController::class);
-
+    
 });
+Route::get('finanzas/estado-finanzas', [GastoController::class,'EstadoResultado']);
 
 
 Route::get('list/facturas', [ListadosPaginasController::class, 'facturasList']);

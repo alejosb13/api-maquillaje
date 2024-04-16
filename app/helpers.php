@@ -3,10 +3,13 @@
 use App\Models\Categoria;
 use App\Models\Cliente;
 use App\Models\ClientesReactivados;
+use App\Models\CostosVentas;
 use App\Models\Factura;
 use App\Models\Factura_Detalle;
 use App\Models\FacturaHistorial;
 use App\Models\Frecuencia;
+use App\Models\Gasto;
+use App\Models\InversionDetail;
 use App\Models\Meta;
 use App\Models\MetaHistorial;
 use App\Models\MetaRecuperacion;
@@ -1965,14 +1968,14 @@ function mora60_90Query($request)
             if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaActual) >= 60) {
 
 
-                if( $factura->cliente->categoria->tipo != "DP"){// si no pertenece a depurados lo agrego
+                if ($factura->cliente->categoria->tipo != "DP") { // si no pertenece a depurados lo agrego
                     $factura->user;
                     $factura->cliente->categoria;
                     $factura->vencimiento60  = $fechaPasado60DiasVencimiento;
                     $factura->vencimiento90  = $fechaPasado90DiasVencimiento;
-    
+
                     $response["total_saldo"] += $factura->saldo_restante;
-    
+
                     // $factura->diferenciaDias = Carbon::parse($factura->fecha_vencimiento)->diffInDays($fechaActual);
                     $factura->diferenciaDias = Carbon::parse($factura->created_at)->diffInDays($fechaActual);
                     array_push($response["factura"], $factura);
@@ -2052,6 +2055,169 @@ function ventasMes($request, $usuario)
     }
 
     $response["user"] = $usuario;
+
+    return $response;
+}
+
+function ListadoCostosProductosVendidos($request)
+{
+    $user = (object) [
+        "id" => 25,
+    ];
+    // dd([$user,$request->all()]);
+
+    $response = [
+        'totalProductos' => 0,
+        'productos' => [],
+        'user' => $user,
+    ];
+    $contadorProductos = 0;
+    $idProductos = [];
+
+    if (empty($request->dateIni)) {
+        $dateIni = Carbon::now();
+    } else {
+        $dateIni = Carbon::parse($request->dateIni);
+    }
+
+    if (empty($request->dateFin)) {
+        $dateFin = Carbon::now();
+    } else {
+        $dateFin = Carbon::parse($request->dateFin);
+    }
+    $facturasStorage = Factura::select("*")
+        // ->where('status_pagado', $request->status_pagado ? $request->status_pagado : 0) // si envian valor lo tomo, si no por defecto asigno por pagar = 0
+        ->where('status', 1);
+
+    // dd([ $request->allDates]);
+    if ($request->allDates == "false") {
+        $facturasStorage = $facturasStorage->whereBetween(
+            'created_at',
+            [
+                $dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"
+            ]
+        );
+        // dd([ $dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+    }
+
+    $facturas = $facturasStorage->get();
+
+    foreach ($facturas as $factura) {
+        $factura->factura_detalle = $factura->factura_detalle()->where([
+            ['estado', '=', 1],
+        ])->get();
+
+        if (count($factura->factura_detalle) > 0) {
+            foreach ($factura->factura_detalle as $factura_detalle) {
+                array_push($idProductos, $factura_detalle->producto_id);
+                $contadorProductos = $contadorProductos + $factura_detalle->cantidad;
+                // $factura_detalle->producto  = $factura_detalle->producto; 
+            }
+        }
+
+        // $response["productos"][] = $factura->factura_detalle; 
+        // array_push($response["productos"],$factura->factura_detalle) ; 
+    }
+
+    // if (count($idProductos) > 0) {
+
+
+    $productoVendidos = Factura_Detalle::join('productos', 'productos.id', '=', 'factura_detalles.producto_id')
+        ->wherein('productos.id', $idProductos)
+        ->where([
+            ["productos.estado", "=", "1"],
+            ["factura_detalles.estado", "=", "1"]
+        ])
+        ->select(
+            DB::raw(
+                'productos.id,
+                    SUM(factura_detalles.cantidad) AS cantidad, 
+                    productos.marca, 
+                    productos.modelo, 
+                    productos.linea, 
+                    productos.descripcion'
+
+            )
+        )
+        ->groupBy('factura_detalles.producto_id');
+
+    if ($request->disablePaginate && $request->disablePaginate == 1) {
+        $productoVendidos = $productoVendidos->get();
+    } else {
+        $productoVendidos = $productoVendidos->paginate(15);
+    }
+
+    foreach ($productoVendidos as $productoVendido) {
+        $productoVendido->costo_opcional = CostosVentas::where([
+            ["producto_id", "=", $productoVendido->id]
+        ])->first();
+
+        $productoVendido->inversion = InversionDetail::where([
+            ["codigo", "=", $productoVendido->id],
+            ["updated_at", "=", DB::raw('(
+                        SELECT MAX(updated_at)
+                        FROM inversion_details
+                    )')]
+        ])->first();
+    }
+    $response["totalProductos"] = $productoVendidos;
+    // }
+
+    // $response = $facturas;
+    // $response["id"] = $idProductos;
+    return $response;
+}
+
+function ListadoGastos($request)
+{
+    $response=[];
+    $dateIni = empty($request->dateIni) ? Carbon::now() : Carbon::parse($request->dateIni);
+    $dateFin = empty($request->dateFin) ? Carbon::now() : Carbon::parse($request->dateFin);
+
+    // DB::enableQueryLog();
+
+    $gastos =  Gasto::query();
+
+    // ** Filtrado por rango de fechas 
+    $gastos->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
+        return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+    });
+
+    $gastos->when($request->estado, function ($q) use ($request) {
+        return $q->where('estado', $request->estado);
+    });
+
+    // filtrados para campos numericos
+    $gastos->when(isset($request->filter) && !is_numeric($request->filter), function ($q) use ($request) {
+        $query = $q;
+        // id de recibos 
+        $query = $query->where(
+            [
+                ['numero', 'LIKE', '%' . $request->filter . '%'],
+            ]
+        );
+
+        return $query;
+    }); // Fin Filtrado
+
+
+    if ($request->disablePaginate == 0) {
+        $gastos = $gastos->orderBy('created_at', 'desc')->paginate(15);
+    } else {
+        $gastos = $gastos->orderBy('created_at', 'desc')->get();
+    }
+
+    // dd(DB::getQueryLog());
+
+    // if (count($gastos) > 0) {
+        foreach ($gastos as $gasto) {
+            $gasto->typeValueString();
+            // $importacion->inversion;
+            // $importacion->inversion_detalle;
+        }
+
+        $response = $gastos;
+    // }
 
     return $response;
 }

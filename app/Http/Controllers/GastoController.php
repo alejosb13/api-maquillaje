@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Gasto;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
@@ -20,56 +21,7 @@ class GastoController extends Controller
         $response = [];
         $status = 200;
 
-        $dateIni = empty($request->dateIni) ? Carbon::now() : Carbon::parse($request->dateIni);
-        $dateFin = empty($request->dateFin) ? Carbon::now() : Carbon::parse($request->dateFin);
-
-        // DB::enableQueryLog();
-
-        $gastos =  Gasto::query();
-
-        // ** Filtrado por rango de fechas 
-        $gastos->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
-            return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
-        });
-
-        $gastos->when($request->estado, function ($q) use ($request) {
-            return $q->where('estado', $request->estado);
-        });
-
-        // filtrados para campos numericos
-        $gastos->when($request->filter && !is_numeric($request->filter), function ($q) use ($request) {
-            $query = $q;
-            // id de recibos 
-            $query = $query->where(
-                [
-                    ['numero', 'LIKE', '%' . $request->filter . '%'],
-                ]
-            );
-
-            return $query;
-        }); // Fin Filtrado
-
-
-        if ($request->disablePaginate == 0) {
-            $gastos = $gastos->orderBy('created_at', 'desc')->paginate(15);
-        } else {
-            $gastos = $gastos->orderBy('created_at', 'desc')->get();
-        }
-
-        // dd(DB::getQueryLog());
-
-        if (count($gastos) > 0) {
-            foreach ($gastos as $gasto) {
-                $gasto->typeValueString();
-                // $importacion->inversion;
-                // $importacion->inversion_detalle;
-            }
-
-            $response[] = $gastos;
-        }
-
-        $response = $gastos;
-
+        $response = ListadoGastos($request);
 
         return response()->json($response, $status);
     }
@@ -237,5 +189,81 @@ class GastoController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function EstadoResultado(Request $request)
+    {
+        $response = [
+            'ventas_listado' => [],
+            'ventas_totalMetas' => 0,
+            'ventas_total' => 0,
+            'costo_listado' => [],
+            'costo_total' => 0,
+            'utilidad_bruta_total' => 0,
+            'gasto_general_total' => 0,
+            'gasto_total' => 0,
+            'incentivos_total' => 0,
+            'incentivos_supervisor_total' => 0,
+            'utilidad_neta_total' => 0,
+        ];
+
+        $users = User::where([
+            ["estado", "=", 1],
+        ])->get();
+
+        $dataRequest = (object) [
+            "allDates" => false,
+            "dateFin" => $request->dateFin,
+            "dateIni" => $request->dateIni,
+            "status_pagado" => 0,
+            "userId" => 0,
+            "allNumber" => true,
+            'allUsers' => false,
+            'estado' => 1,
+            'disablePaginate' => 1,
+        ];
+
+        $resultCostosProductosVendidos = ListadoCostosProductosVendidos($dataRequest);
+        // dd($dataRequest);
+        // dd($resultCostosProductosVendidos["totalProductos"]);
+        $response["costo_listado"][] = $resultCostosProductosVendidos["totalProductos"];
+
+        foreach ($resultCostosProductosVendidos["totalProductos"] as $costo) {
+            if ($costo->inversion) {
+                $response["costo_total"] += $costo->inversion->costo * $costo->cantidad;
+            } else {
+                if ($costo->costo_opcional) {
+                    $response["costo_total"] += $costo->costo_opcional->costo * $costo->cantidad;
+                }
+            }
+        }
+
+        $responseGastos = ListadoGastos($dataRequest);
+        foreach ($responseGastos as $gasto) {
+            $response["gasto_general_total"] += $gasto->monto;
+        }
+
+        foreach ($users as $user) {
+            $dataRequest->userId = $user->id;
+
+            if (!in_array($dataRequest->userId, [20, 21, 23, 24, 25, 32])) {
+                $responseIncentivo = incentivosQuery($dataRequest);
+                $response["incentivos_total"] += $responseIncentivo["total"];
+            }
+
+            $listadoVentasUser = ventasMes($dataRequest, $user);
+            $response["ventas_totalMetas"] += $listadoVentasUser['meta'];
+            $response["ventas_total"] += $listadoVentasUser['totalVentas'];
+            $response["ventas_listado"][] = $listadoVentasUser;
+        }
+
+        $incentivosSupervisor = incentivoSupervisorQuery($request);
+        $response["incentivos_supervisor_total"] = decimal($incentivosSupervisor["totalFacturaVendedores2Porciento"] + $incentivosSupervisor["totalRecuperacionVendedores"]);
+
+        $response["incentivos_total"]  = decimal($response["incentivos_total"]  * 0.20);
+
+        $response["utilidad_bruta_total"] = $response["ventas_total"] - $response["costo_total"];
+        $response["utilidad_neta_total"] = $response["ventas_total"] - $response["costo_total"];
+        return response()->json($response, 200);
     }
 }

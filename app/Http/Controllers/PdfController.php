@@ -548,6 +548,130 @@ class PdfController extends Controller
         return $archivo->download('ventas_productos.pdf');
     }
 
+    public function estadoFinanzaPDF(Request $request)
+    {
+
+        $ventas_listado = [];
+        $ventas_totalMetas = 0;
+        $ventas_total = 0;
+        $costo_listado = [];
+        $costo_total_porcentaje = 0;
+        $costo_total = 0;
+        $utilidad_bruta_total = 0;
+        $gasto_general_total = 0;
+        $gasto_total = 0;
+        $gasto_total_porcentaje = 0;
+        $incentivos_vendedor_total = 0;
+        $incentivos_supervisor_total = 0;
+        $incentivos_total = 0;
+        $utilidad_neta_total = 0;
+        $utilidad_neta_total_porcentaje = 0;
+
+        $users = User::where([
+            ["estado", "=", 1],
+        ])->get();
+
+        $dataRequest = (object) [
+            "allDates" => false,
+            "dateFin" => $request->dateFin,
+            "dateIni" => $request->dateIni,
+            "status_pagado" => 0,
+            "userId" => 0,
+            "allNumber" => true,
+            'allUsers' => false,
+            'estado' => 1,
+            'disablePaginate' => 1,
+        ];
+
+        $resultCostosProductosVendidos = ListadoCostosProductosVendidos($dataRequest);
+        $costo_listado[] = $resultCostosProductosVendidos["totalProductos"];
+
+        foreach ($resultCostosProductosVendidos["totalProductos"] as $costo) {
+            if ($costo->inversion) {
+                $costo_total += $costo->inversion->costo * $costo->cantidad;
+            } else {
+                if ($costo->costo_opcional) {
+                    $costo_total += $costo->costo_opcional->costo * $costo->cantidad;
+                }
+            }
+        }
+
+        $responseGastos = ListadoGastos($dataRequest);
+        foreach ($responseGastos as $gasto) {
+            $gasto_general_total += $gasto->monto;
+        }
+
+        foreach ($users as $user) {
+            $dataRequest->userId = $user->id;
+
+            if (!in_array($dataRequest->userId, [20, 21, 23, 24, 25, 32])) {
+                $responseIncentivo = incentivosQuery($dataRequest);
+                $incentivos_vendedor_total += $responseIncentivo["total"];
+            }
+
+            $listadoVentasUser = ventasMes($dataRequest, $user);
+            $ventas_totalMetas += $listadoVentasUser['meta'];
+            $ventas_total += $listadoVentasUser['totalVentas'];
+            $ventas_listado[] = $listadoVentasUser;
+        }
+
+        $incentivosSupervisor = incentivoSupervisorQuery($dataRequest);
+        $incentivos_supervisor_total = decimal($incentivosSupervisor["totalFacturaVendedores2Porciento"] + $incentivosSupervisor["totalRecuperacionVendedores"]);
+        $incentivos_vendedor_total  = decimal($incentivos_vendedor_total  * 0.20);
+        $incentivos_total  = decimal($incentivos_vendedor_total  + $incentivos_supervisor_total);
+
+        $gasto_total  = decimal($incentivos_total + $gasto_general_total);
+        $gasto_total_porcentaje  =  $ventas_total ? decimal($gasto_total / $ventas_total) : 0;
+
+        $costo_total_porcentaje  = $ventas_total ? decimal($costo_total / $ventas_total) : 0;
+
+        $utilidad_bruta_total = decimal($ventas_total - $costo_total);
+        $utilidad_neta_total = decimal($utilidad_bruta_total - $gasto_total);
+        $utilidad_neta_total_porcentaje  = $ventas_total ? decimal($utilidad_neta_total / $ventas_total) : 0;
+
+        $archivo = PDF::loadView('estado_finanza', compact(
+            'ventas_listado',
+            'ventas_totalMetas',
+            'ventas_total',
+            'costo_listado',
+            'costo_total_porcentaje',
+            'costo_total',
+            'utilidad_bruta_total',
+            'gasto_general_total',
+            'gasto_total',
+            'gasto_total_porcentaje',
+            'incentivos_vendedor_total',
+            'incentivos_supervisor_total',
+            'incentivos_total',
+            'utilidad_neta_total',
+            'utilidad_neta_total_porcentaje',
+            'dataRequest'
+        ));
+        $pdf = PDF::loadView('estado_finanza', compact(
+            'ventas_listado',
+            'ventas_totalMetas',
+            'ventas_total',
+            'costo_listado',
+            'costo_total_porcentaje',
+            'costo_total',
+            'utilidad_bruta_total',
+            'gasto_general_total',
+            'gasto_total',
+            'gasto_total_porcentaje',
+            'incentivos_vendedor_total',
+            'incentivos_supervisor_total',
+            'incentivos_total',
+            'utilidad_neta_total',
+            'utilidad_neta_total_porcentaje',
+            'dataRequest'
+        ))->output();
+
+        Storage::disk('public')->put('estado_finanza.pdf', $pdf);
+
+
+        return $archivo->download('estado_finanza.pdf');
+    }
+
     public function productosVendidosSupervisor(Request $request)
     {
         // $users = User::where([

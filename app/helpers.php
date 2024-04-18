@@ -2180,7 +2180,7 @@ function ListadoGastos($request)
 
     // ** Filtrado por rango de fechas 
     $gastos->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
-        return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        return $q->whereBetween('fecha_comprobante', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
     });
 
     $gastos->when($request->estado, function ($q) use ($request) {
@@ -2202,9 +2202,9 @@ function ListadoGastos($request)
 
 
     if ($request->disablePaginate == 0) {
-        $gastos = $gastos->orderBy('created_at', 'desc')->paginate(15);
+        $gastos = $gastos->orderBy('fecha_comprobante', 'desc')->paginate(15);
     } else {
-        $gastos = $gastos->orderBy('created_at', 'desc')->get();
+        $gastos = $gastos->orderBy('fecha_comprobante', 'desc')->get();
     }
 
     // dd(DB::getQueryLog());

@@ -198,13 +198,17 @@ class GastoController extends Controller
             'ventas_totalMetas' => 0,
             'ventas_total' => 0,
             'costo_listado' => [],
+            'costo_total_porcentaje' => 0,
             'costo_total' => 0,
             'utilidad_bruta_total' => 0,
             'gasto_general_total' => 0,
             'gasto_total' => 0,
-            'incentivos_total' => 0,
+            'gasto_total_porcentaje' => 0,
+            'incentivos_vendedor_total' => 0,
             'incentivos_supervisor_total' => 0,
+            'incentivos_total' => 0,
             'utilidad_neta_total' => 0,
+            'utilidad_neta_total_porcentaje' => 0,
         ];
 
         $users = User::where([
@@ -248,7 +252,7 @@ class GastoController extends Controller
 
             if (!in_array($dataRequest->userId, [20, 21, 23, 24, 25, 32])) {
                 $responseIncentivo = incentivosQuery($dataRequest);
-                $response["incentivos_total"] += $responseIncentivo["total"];
+                $response["incentivos_vendedor_total"] += $responseIncentivo["total"];
             }
 
             $listadoVentasUser = ventasMes($dataRequest, $user);
@@ -257,13 +261,19 @@ class GastoController extends Controller
             $response["ventas_listado"][] = $listadoVentasUser;
         }
 
-        $incentivosSupervisor = incentivoSupervisorQuery($request);
+        $incentivosSupervisor = incentivoSupervisorQuery($dataRequest);
         $response["incentivos_supervisor_total"] = decimal($incentivosSupervisor["totalFacturaVendedores2Porciento"] + $incentivosSupervisor["totalRecuperacionVendedores"]);
+        $response["incentivos_vendedor_total"]  = decimal($response["incentivos_vendedor_total"]  * 0.20);
+        $response["incentivos_total"]  = decimal($response["incentivos_vendedor_total"]  + $response["incentivos_supervisor_total"]);
 
-        $response["incentivos_total"]  = decimal($response["incentivos_total"]  * 0.20);
+        $response["gasto_total"]  = decimal($response["incentivos_total"] + $response["gasto_general_total"]);
+        $response["gasto_total_porcentaje"]  = ($response["ventas_total"]) ? decimal($response["gasto_total"] / $response["ventas_total"]) : 0;
 
-        $response["utilidad_bruta_total"] = $response["ventas_total"] - $response["costo_total"];
-        $response["utilidad_neta_total"] = $response["ventas_total"] - $response["costo_total"];
+        $response["costo_total_porcentaje"]  = ($response["ventas_total"]) ? decimal($response["costo_total"] / $response["ventas_total"]) : 0;
+
+        $response["utilidad_bruta_total"] = decimal($response["ventas_total"] - $response["costo_total"]);
+        $response["utilidad_neta_total"] = decimal($response["utilidad_bruta_total"] - $response["gasto_total"]);
+        $response["utilidad_neta_total_porcentaje"]  = $response["ventas_total"] ? decimal($response["utilidad_neta_total"] / $response["ventas_total"]) : 0;
         return response()->json($response, 200);
     }
 }

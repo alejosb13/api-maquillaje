@@ -2212,6 +2212,7 @@ function ListadoGastos($request)
     // if (count($gastos) > 0) {
         foreach ($gastos as $gasto) {
             $gasto->typeValueString();
+            $gasto->typePayValueString();
             // $importacion->inversion;
             // $importacion->inversion_detalle;
         }

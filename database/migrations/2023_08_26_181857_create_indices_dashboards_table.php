@@ -35,7 +35,7 @@ class CreateIndicesDashboardsTable extends Migration
             $table->integer("clientes_inactivos");
             $table->integer("clientes_reactivados");
             $table->integer("productos_vendidos");
-            $table->double('ventas_mes_total', 5, 2);
+            $table->double('ventas_mes_total', 9, 2);
             $table->double('ventas_mes_meta', 9, 2);
             $table->double('ventas_mes_porcentaje', 9, 2);
             $table->timestamps();

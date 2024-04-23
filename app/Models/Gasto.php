@@ -13,6 +13,8 @@ class Gasto extends Model
         "tipo",
         "numero",
         "conceptualizacion",
+        "tipo_pago",
+        "pago_desc",
         "monto",
         "fecha_comprobante",
         "estado",
@@ -24,6 +26,12 @@ class Gasto extends Model
         "Adicional",
     ];
 
+    public $tiposPagos = [
+        "Efectivo",
+        "Transferencia",
+        "Otro",
+    ];
+
     public function typeToString()
     {
         $this->tipo = $this->tipos[$this->tipo];
@@ -32,5 +40,15 @@ class Gasto extends Model
     public function typeValueString()
     {
         $this->tipo_desc = $this->tipos[$this->tipo];
+    }
+
+    public function typePayToString()
+    {
+        $this->tipo_pago = $this->tiposPagos[$this->tipo_pago];
+    }
+
+    public function typePayValueString()
+    {
+        $this->tipo_pago_str = $this->tiposPagos[$this->tipo_pago];
     }
 }

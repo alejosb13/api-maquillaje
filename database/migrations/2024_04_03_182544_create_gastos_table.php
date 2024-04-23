@@ -19,6 +19,8 @@ class CreateGastosTable extends Migration
             $table->integer("tipo")->length(3);
             $table->string("numero",80)->nullable();
             $table->string("conceptualizacion",160)->nullable();
+            $table->integer("tipo_pago")->length(3);
+            $table->string("pago_desc",160)->nullable();
             $table->double('monto', 16, 2);
             $table->timestamp("fecha_comprobante")->nullable();
             $table->integer("estado")->length(1)->default(1);

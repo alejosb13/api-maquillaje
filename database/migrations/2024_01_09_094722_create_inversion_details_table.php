@@ -23,6 +23,8 @@ class CreateInversionDetailsTable extends Migration
             $table->string("codigo",80)->nullable();
             $table->string("producto",80)->nullable();
             $table->string("marca",80)->nullable();
+            $table->string("modelo",80)->nullable();
+            $table->string("linea",80)->nullable();
             $table->integer("cantidad")->length(1);
             $table->double('precio_unitario', 16, 2);
             $table->double('porcentaje_ganancia', 16, 2);
@@ -33,12 +35,14 @@ class CreateInversionDetailsTable extends Migration
             $table->double('costo_total', 16, 2);
             $table->double('subida_ganancia', 16, 2);
             $table->double('precio_venta', 16, 2);
+            $table->double('margen_ganancia', 16, 2);
             $table->double('venta', 16, 2);
             $table->double('venta_total', 16, 2);
             $table->double('costo_real', 16, 2);
             $table->double('ganancia_bruta', 16, 2);
             $table->double('comision_vendedor', 16, 2);
             $table->integer("producto_insertado")->length(1)->default(0);
+            $table->integer("isNew")->length(1)->default(0);
 
             $table->integer("estado")->length(1)->default(1);
             $table->timestamps();

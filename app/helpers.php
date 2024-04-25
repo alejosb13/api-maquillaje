@@ -2067,12 +2067,14 @@ function ListadoCostosProductosVendidos($request)
     // dd([$user,$request->all()]);
 
     $response = [
+        'costoTotal' => 0,
         'totalProductos' => 0,
         'productos' => [],
         'user' => $user,
     ];
     $contadorProductos = 0;
     $idProductos = [];
+    $idFacturaDetalles = [];
 
     if (empty($request->dateIni)) {
         $dateIni = Carbon::now();
@@ -2090,14 +2092,14 @@ function ListadoCostosProductosVendidos($request)
         ->where('status', 1);
 
     // dd([ $request->allDates]);
-    if ($request->allDates == "false") {
+    if (isset($request->allDates) && $request->allDates == "false") {
         $facturasStorage = $facturasStorage->whereBetween(
             'created_at',
             [
                 $dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"
             ]
         );
-        // dd([ $dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        // print_r([$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
     }
 
     $facturas = $facturasStorage->get();
@@ -2110,7 +2112,8 @@ function ListadoCostosProductosVendidos($request)
         if (count($factura->factura_detalle) > 0) {
             foreach ($factura->factura_detalle as $factura_detalle) {
                 array_push($idProductos, $factura_detalle->producto_id);
-                $contadorProductos = $contadorProductos + $factura_detalle->cantidad;
+                array_push($idFacturaDetalles, $factura_detalle->id);
+                $contadorProductos += $factura_detalle->cantidad;
                 // $factura_detalle->producto  = $factura_detalle->producto; 
             }
         }
@@ -2123,7 +2126,8 @@ function ListadoCostosProductosVendidos($request)
 
 
     $productoVendidos = Factura_Detalle::join('productos', 'productos.id', '=', 'factura_detalles.producto_id')
-        ->wherein('productos.id', $idProductos)
+        // ->wherein('productos.id', $idProductos)
+        ->wherein('factura_detalles.id', $idFacturaDetalles)
         ->where([
             ["productos.estado", "=", "1"],
             ["factura_detalles.estado", "=", "1"]
@@ -2136,10 +2140,33 @@ function ListadoCostosProductosVendidos($request)
                     productos.modelo, 
                     productos.linea, 
                     productos.descripcion'
-
             )
         )
         ->groupBy('factura_detalles.producto_id');
+
+        $todosLosProductos = $productoVendidos->get();
+        foreach ($todosLosProductos as $productoVentaTotal) {
+
+    
+            $inversion = InversionDetail::where([
+                ["codigo", "=", $productoVentaTotal->id],
+                ["updated_at", "=", DB::raw('(
+                            SELECT MAX(updated_at)
+                            FROM inversion_details
+                        )')]
+            ])->first();
+
+            if ($inversion) {
+                $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
+            } else {
+                $costo_opcional = CostosVentas::where([
+                    ["producto_id", "=", $productoVentaTotal->id]
+                ])->first();
+                if ($costo_opcional) {
+                    $response["costoTotal"] += decimal($costo_opcional->costo * $productoVentaTotal->cantidad);
+                }
+            }
+        }
 
     if ($request->disablePaginate && $request->disablePaginate == 1) {
         $productoVendidos = $productoVendidos->get();
@@ -2160,7 +2187,8 @@ function ListadoCostosProductosVendidos($request)
                     )')]
         ])->first();
     }
-    $response["totalProductos"] = $productoVendidos;
+    $response["productos"] = $productoVendidos;
+    $response["totalProductos"] = $contadorProductos;
     // }
 
     // $response = $facturas;
@@ -2170,7 +2198,7 @@ function ListadoCostosProductosVendidos($request)
 
 function ListadoGastos($request)
 {
-    $response=[];
+    $response = [];
     $dateIni = empty($request->dateIni) ? Carbon::now() : Carbon::parse($request->dateIni);
     $dateFin = empty($request->dateFin) ? Carbon::now() : Carbon::parse($request->dateFin);
 
@@ -2187,6 +2215,10 @@ function ListadoGastos($request)
         return $q->where('estado', $request->estado);
     });
 
+    $gastos->when(isset($request->tipoGasto) && $request->tipoGasto != 99, function ($q) use ($request) {
+        return $q->where('tipo', $request->tipoGasto);
+    });
+
     // filtrados para campos numericos
     $gastos->when(isset($request->filter) && !is_numeric($request->filter), function ($q) use ($request) {
         $query = $q;
@@ -2200,7 +2232,7 @@ function ListadoGastos($request)
         return $query;
     }); // Fin Filtrado
 
-
+    $TotalMonto = $gastos->sum('monto');
     if ($request->disablePaginate == 0) {
         $gastos = $gastos->orderBy('fecha_comprobante', 'desc')->paginate(15);
     } else {
@@ -2210,15 +2242,17 @@ function ListadoGastos($request)
     // dd(DB::getQueryLog());
 
     // if (count($gastos) > 0) {
-        foreach ($gastos as $gasto) {
-            $gasto->typeValueString();
-            $gasto->typePayValueString();
-            // $importacion->inversion;
-            // $importacion->inversion_detalle;
-        }
+    foreach ($gastos as $gasto) {
+        $gasto->typeValueString();
+        $gasto->typePayValueString();
+        // $importacion->inversion;
+        // $importacion->inversion_detalle;
+    }
 
-        $response = $gastos;
+    // $gastos->totalGastos = $TotalMonto;
+
     // }
-
+    $response["response"] = $gastos;
+    $response["total_monto"] = decimal($TotalMonto);
     return $response;
 }

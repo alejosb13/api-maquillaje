@@ -17,7 +17,7 @@ class CostosController extends Controller
     {
         $result = ListadoCostosProductosVendidos($request);
         
-        return response()->json($result["totalProductos"], 200);
+        return response()->json($result, 200);
     }
 
     public function saveCostosVentas(Request $request)

@@ -52,7 +52,6 @@ class GastoController extends Controller
             'numero' => 'required',
             'conceptualizacion' => 'required',
             'tipo_pago' => 'required',
-            'pago_desc' => 'required',
             'monto' => 'required|numeric',
             'fecha_comprobante' => 'required',
         ]);
@@ -149,7 +148,6 @@ class GastoController extends Controller
                     'numero' => 'required',
                     'conceptualizacion' => 'required',
                     'tipo_pago' => 'required',
-                    'pago_desc' => 'required',
                     'monto' => 'required|numeric',
                     'fecha_comprobante' => 'required',
                 ]);
@@ -196,7 +194,33 @@ class GastoController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $response = [];
+        $status = 400;
+
+        if (!is_numeric($id)) {
+            $response["mensaje"] = "El Valor de Id debe ser numérico.";
+            return response()->json($response, $status);
+        }
+
+        $Gasto =  Gasto::find($id);
+
+        if (!$Gasto) {
+            $response = ["mensaje" => "El gasto no existe o fue eliminado."];
+            return response()->json($response, $status);
+        }
+
+        $GastoDelete = $Gasto->update([
+            'estado' => 0,
+        ]);
+
+        if ($GastoDelete) {
+            $response = ["mensaje" => "El gasto fue eliminado con éxito."];
+            $status = 200;
+        } else {
+            $response["mensaje"] = 'Error al eliminar el gasto.';
+        }
+
+        return response()->json($response, $status);
     }
 
     public function EstadoResultado(Request $request)
@@ -238,9 +262,9 @@ class GastoController extends Controller
         $resultCostosProductosVendidos = ListadoCostosProductosVendidos($dataRequest);
         // dd($dataRequest);
         // dd($resultCostosProductosVendidos["totalProductos"]);
-        $response["costo_listado"][] = $resultCostosProductosVendidos["totalProductos"];
+        $response["costo_listado"][] = $resultCostosProductosVendidos["productos"];
 
-        foreach ($resultCostosProductosVendidos["totalProductos"] as $costo) {
+        foreach ($resultCostosProductosVendidos["productos"] as $costo) {
             if ($costo->inversion) {
                 $response["costo_total"] += $costo->inversion->costo * $costo->cantidad;
             } else {
@@ -251,9 +275,7 @@ class GastoController extends Controller
         }
 
         $responseGastos = ListadoGastos($dataRequest);
-        foreach ($responseGastos as $gasto) {
-            $response["gasto_general_total"] += $gasto->monto;
-        }
+        $response["gasto_general_total"] = $responseGastos["total_monto"];
 
         foreach ($users as $user) {
             $dataRequest->userId = $user->id;

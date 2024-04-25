@@ -17,3 +17,6 @@ yarn-error.log
 notas.todo
 
 produccion
+docker-compose.yml
+composer.lock
+vendor.zip

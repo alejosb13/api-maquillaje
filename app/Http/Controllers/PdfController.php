@@ -597,9 +597,7 @@ class PdfController extends Controller
         }
 
         $responseGastos = ListadoGastos($dataRequest);
-        foreach ($responseGastos as $gasto) {
-            $gasto_general_total += $gasto->monto;
-        }
+        $response["gasto_general_total"] = $responseGastos["total_monto"];
 
         foreach ($users as $user) {
             $dataRequest->userId = $user->id;

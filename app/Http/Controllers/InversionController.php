@@ -509,9 +509,9 @@ class InversionController extends Controller
         //     return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
         // });
 
-        // $inversiones->when($request->estado, function ($q) use ($request) {
-        //     return $q->where('estado', $request->estado);
-        // });
+        $inversiones->when($request->estado, function ($q) use ($request) {
+            return $q->where('inversions.estado', $request->estado);
+        });
 
         $inversiones->when($request->import, function ($q) use ($request) {
             $q->select(DB::raw('inversions.*'));

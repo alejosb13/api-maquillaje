@@ -29,6 +29,7 @@ use App\Http\Controllers\ReciboHistorialController;
 use App\Http\Controllers\RegalosController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ScriptController;
+use App\Http\Controllers\TalonariosControler;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Artisan;
 
@@ -127,6 +128,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::resource('cliente', ClienteController::class);
 
     Route::resource('roles', RoleController::class);
+    Route::resource('talonarios', TalonariosControler::class);
 
     Route::resource('usuarios', UsuarioController::class);
 

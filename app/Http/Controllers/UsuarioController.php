@@ -34,6 +34,7 @@ class UsuarioController extends Controller
                 if($usuario->recibo != null ){
                     $usuario->ultimo_recibo = ReciboHistorial::where([
                         ["recibo_id", $usuario->recibo->id],
+                        // ["estado", 1],
                     ]
                     )->orderBy('created_at', 'desc')->first();
                 }

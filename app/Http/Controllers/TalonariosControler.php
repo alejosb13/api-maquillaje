@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\CommonValidations;
 use App\Models\Talonario;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 
 class TalonariosControler extends Controller
 {
+    use CommonValidations;
+
     /**
      * Display a listing of the resource.
      *
@@ -30,7 +35,7 @@ class TalonariosControler extends Controller
             return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
         });
 
-        $Talonarios->when($request->asignado, function ($q) use ($request) {
+        $Talonarios->when(isset($request->asignado) && $request->asignado != 2, function ($q) use ($request) {
             return $q->where('asignado', $request->asignado);
         });
 
@@ -42,8 +47,7 @@ class TalonariosControler extends Controller
             return $q->where('tipo', $request->tipoGasto);
         });
 
-
-        $Talonarios = $Talonarios->orderBy('created_at', 'desc');
+        $Talonarios = $Talonarios->orderBy('min', 'asc');
         if ($request->disablePaginate == 0) {
             $Talonarios = $Talonarios->paginate(15);
         } else {
@@ -84,7 +88,6 @@ class TalonariosControler extends Controller
         $validation = Validator::make($request->all(), [
             'min' => 'required|numeric',
             'max' => 'required|numeric',
-            'user_id' => 'nullable|numeric',
         ]);
 
         if ($validation->fails()) {
@@ -92,15 +95,24 @@ class TalonariosControler extends Controller
         }
         // DB::enableQueryLog();
 
+        if ($request['min'] > $request['max']) {
+            $response = ["mensaje" => "El mínimo no puede ser mayor o igual al máximo."];
+            return response()->json($response, 400);
+        }
+
+        if (!$this->validNumberRangeTalonarios($request['min'], $request['max'], false)) {
+            $response = ["mensaje" => "El rango numérico del talonario ya coincide con uno existente."];
+            return response()->json($response, 400);
+        }
+
         $Talonario = Talonario::create([
-            'min' => $request['min'],
-            'max' => $request['max'],
-            'user_id' => $request['user_id'],
+            'min' => $request->min,
+            'max' => $request->max,
+            'user_id' => $request->user_id,
         ]);
-        // $query = DB::getQueryLog();
-        // dd($query);
+
         return response()->json([
-            'mensaje' => 'Talonario agregado con éxito',
+            'mensaje' => 'Talonario creado con éxito',
             'data' => [
                 'id' => $Talonario->id,
             ]
@@ -232,9 +244,70 @@ class TalonariosControler extends Controller
             $response = ["mensaje" => "El talonario fue eliminado con éxito."];
             $status = 200;
         } else {
-            $response["mensaje"] = 'Error al eliminar el talonario.'; 
+            $response["mensaje"] = 'Error al eliminar el talonario.';
         }
 
         return response()->json($response, $status);
+    }
+
+    public function talonario(Request $request)
+    {
+        try {
+            $validation = Validator::make($request->all(), [
+                'talonarios' => 'required',
+            ]);
+
+            if ($validation->fails()) {
+                return response()->json([$validation->errors()], 400);
+            }
+            // DB::enableQueryLog();
+            $talonarios = $request->talonarios;
+            $rangoTalonario = [];
+            $currenTime = Carbon::now();;
+
+
+            foreach ($talonarios as $talonario) {
+                // Obtener el primer valor
+                $primero = reset($talonario);
+
+                // Obtener el último valor
+                $ultimo = end($talonario);
+
+                if ($primero > $ultimo) {
+                    $response = ["mensaje" => "El mínimo no puede ser mayor o igual al máximo."];
+                    return response()->json($response, 400);
+                }
+
+                if (!$this->validNumberRangeTalonarios($primero, $ultimo, false)) {
+                    $response = ["mensaje" => "El rango numérico de ($primero - $ultimo)  del talonario ya coincide con uno existente."];
+                    return response()->json($response, 400);
+                }
+
+                if (!$this->validNumberRange($primero, $ultimo, false)) {
+                    $response = ["mensaje" => "El rango numérico de ($primero - $ultimo) ya existe en un recibo."];
+                    return response()->json($response, 400);
+                }
+
+                array_push($rangoTalonario, [
+                    'min' => $primero,
+                    'max' => $ultimo,
+                    'user_id' => null,
+                    'created_at' => $currenTime,
+                    'updated_at' => $currenTime
+                ]);
+            }
+
+            Talonario::insert($rangoTalonario);
+
+            DB::commit();
+
+            return response()->json([
+                'mensaje' => 'Talonarios creado con éxito'
+            ], 201);
+        } catch (Exception $e) {
+            DB::rollback();
+            // print_r(json_encode($e));
+            return response()->json(["mensaje" => json_encode($e)], 400);
+        }
     }
 }

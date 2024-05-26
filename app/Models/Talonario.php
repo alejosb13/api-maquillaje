@@ -14,6 +14,7 @@ class Talonario extends Model
         "max",
         "user_id",
         "recibo_cerrado",
+        "asignado",
         "estado",
     ];
 

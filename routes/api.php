@@ -128,7 +128,6 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::resource('cliente', ClienteController::class);
 
     Route::resource('roles', RoleController::class);
-    Route::resource('talonarios', TalonariosControler::class);
 
     Route::resource('usuarios', UsuarioController::class);
 
@@ -190,7 +189,10 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     
     Route::resource('finanzas/gastos', GastoController::class);
     
+    Route::post('talonarios/lote', [TalonariosControler::class, 'talonario']);
+    Route::resource('talonarios', TalonariosControler::class);
 });
+
 
 
 Route::get('list/facturas', [ListadosPaginasController::class, 'facturasList']);

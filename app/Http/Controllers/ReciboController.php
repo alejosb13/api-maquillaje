@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\CommonValidations;
 use App\Models\Recibo;
 use App\Models\RecibosRangosSinTerminar;
+use App\Models\Talonario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ReciboController extends Controller
 {
+    use CommonValidations;
+
     /**
      * Display a listing of the resource.
      *
@@ -82,7 +86,7 @@ class ReciboController extends Controller
                     ]);
                     $error = 201;
                 } else {
-                    $response[] = array('mensaje' => "El rango numerico del recibo ya coincide con uno existente.");
+                    $response[] = array('mensaje' => "El rango numérico del recibo ya coincide con uno existente.");
                     $error = 400;
                 }
             } else {
@@ -235,51 +239,62 @@ class ReciboController extends Controller
         $response = [];
         $status = 400;
 
-        if (is_numeric($id)) {
-            $recibo =  Recibo::find($id);
 
-            if ($recibo) {
-                $validation = Validator::make($request->all(), [
-                    'user_id'        => 'required|numeric',
-                    'max'            => 'numeric|required',
-                    'min'            => 'numeric|required',
-                    'recibo_cerrado' => 'required|numeric|max:1',
-                    'estado'         => 'required|numeric|max:1',
+        if (!$id) {
+            $response[] = "El Valor de Id debe ser numerico.";
+            return response()->json($response, $status);
+        }
+
+        $validation = Validator::make($request->all(), [
+            'user_id'        => 'required|numeric',
+            'max'            => 'numeric|required',
+            'min'            => 'numeric|required',
+            'recibo_cerrado' => 'required|numeric|max:1',
+            'estado'         => 'required|numeric|max:1',
+        ]);
+
+        $recibo =  Recibo::find($id);
+        if (!$recibo) {
+            $response[] = "El Recibo no existe.";
+            return response()->json($response, $status);
+        }
+
+        if ($validation->fails()) {
+            return response()->json([$validation->errors()], 400);
+        }
+
+        $responseValidLastRanges = $this->validLastRanges($request['user_id']);
+        if (!$responseValidLastRanges["valido"]) {
+            return response()->json($responseValidLastRanges, $status);
+        }
+
+        // dd("test");
+
+        if ($this->validNumberRange($request['min'], $request['max'], $id)) {
+            $reciboUpdate = $recibo->update([
+                'max' => $request['max'],
+                'min' => $request['min'],
+                'user_id' => $request['user_id'],
+                'estado' => $request['estado'],
+            ]);
+
+            if (isset($request->talonario) && $request->talonario == 1) { // si existe talonario que cambie su estado
+                $Talonario =  Talonario::find($request->talonario_id);
+                // print_r(json_encode($Talonario));
+
+                $TalonarioDelete = $Talonario->update([
+                    'asignado' => 1,
                 ]);
+            }
 
-                if ($validation->fails()) {
-                    $response[] = $validation->errors();
-                } else {
-                    $responseValidLastRanges = $this->validLastRanges($request['user_id']);
-                    if (!$responseValidLastRanges["valido"]) {
-                        return response()->json($responseValidLastRanges, $status);
-                    }
-
-                    // dd("test");
-
-                    if ($this->validNumberRange($request['min'], $request['max'], $id)) {
-                        $reciboUpdate = $recibo->update([
-                            'max' => $request['max'],
-                            'min' => $request['min'],
-                            'user_id' => $request['user_id'],
-                            'estado' => $request['estado'],
-                        ]);
-
-                        if ($reciboUpdate) {
-                            $response = $recibo;
-                            $status = 200;
-                        } else {
-                            $response[] = 'Error al modificar los datos.';
-                        }
-                    } else {
-                        $response[] = "El rango numerico del recibo ya coincide con uno existente.";
-                    }
-                }
+            if ($reciboUpdate) {
+                $response = $recibo;
+                $status = 200;
             } else {
-                $response[] = "El Recibo no existe.";
+                $response[] = 'Error al modificar los datos.';
             }
         } else {
-            $response[] = "El Valor de Id debe ser numerico.";
+            $response[] = "El rango numerico del recibo ya coincide con uno existente.";
         }
 
         return response()->json($response, $status);
@@ -320,39 +335,6 @@ class ReciboController extends Controller
         return response()->json($response, $status);
     }
 
-
-    private function validNumberRange($min, $max, $id)
-    {
-
-        if ($id) {
-            $minimo = DB::table('recibos')->where([
-                ['id', "!=", $id],
-                ['estado', "=", 1],
-            ])->whereBetween('min', [$min, $max])->get();
-
-            $maximo = DB::table('recibos')->where([
-                ['id', "!=", $id],
-                ['estado', "=", 1],
-            ])->whereBetween('max', [$min, $max])->get();
-        } else {
-            $minimo = DB::table('recibos')->where([
-                ['estado', "=", 1],
-            ])->whereBetween('min', [$min, $max])->get();
-
-            $maximo = DB::table('recibos')->where([
-                ['estado', "=", 1],
-            ])->whereBetween('max', [$min, $max])->get();
-        }
-
-        // print_r (json_encode($minimo));
-        // print_r (json_encode($maximo));
-        if (count($minimo) == 0 && count($maximo) == 0) {
-            return true;
-        }
-
-        return false;
-    }
-
     private function getRecibosSinCrear($min, $max, $user_id)
     {
 
@@ -367,7 +349,7 @@ class ReciboController extends Controller
         $recibosExistentes = Recibo::where([
             ['user_id', $user_id],
             ['recibo_historials.rango', "$min-$max"],
-            ['recibo_historials.estado', 1],
+            // ['recibo_historials.estado', 1], // se comenta porque si no toma recibos anulados en cuenta
         ])
             ->select(DB::raw('recibo_historials.numero '))
             ->join('recibo_historials', 'recibo_historials.recibo_id', '=', 'recibos.id')

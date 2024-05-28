@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AuthenticationController extends Controller
 {
@@ -69,7 +70,7 @@ class AuthenticationController extends Controller
             if ($dataCierre->cierre == 1) {
                 if (!$user->hasAnyRole(["administrador"])) return response()->json(['mensaje' => "La app tiene el cierre activo"], 401);
             }
-            
+
             $this->resetCategory();
 
             $token = $user->createToken('tokens')->plainTextToken;
@@ -124,11 +125,18 @@ class AuthenticationController extends Controller
         ])
             ->whereBetween('created_at', [$inicioMesActual . " 00:00:00",  $finMesActual . " 23:59:59"])
             ->exists();
- 
 
+        // DB::enableQueryLog();
+
+        // Log::notice("Inicio del Log");
         if (!$tienetareaEsteMes) {
             $categoriaListaNegra =  Categoria::where([
                 ['tipo', '=', "LN"],
+                ['estado', '=', 1]
+            ])->first();
+
+            $categoriaDepurado =  Categoria::where([
+                ['tipo', '=', "DP"],
                 ['estado', '=', 1]
             ])->first();
 
@@ -139,7 +147,8 @@ class AuthenticationController extends Controller
 
             Cliente::where([
                 ["estado", "=", 1],
-                ["categoria_id", "!=", $categoriaListaNegra->id]
+                ["categoria_id", "!=", $categoriaListaNegra->id],
+                ["categoria_id", "!=", $categoriaDepurado->id]
             ])->update(['categoria_id' => $categoriaC->id]);
 
             TareasCrons::create([
@@ -147,7 +156,12 @@ class AuthenticationController extends Controller
                 'descripcion' => "cron que reinicia la categoria de los usuarios",
                 'estado' => 1,
             ]);
-        }
+            // $query = DB::getQueryLog();
+            // Log::notice(json_encode($categoriaListaNegra));
+            // Log::notice(json_encode($categoriaDepurado));
+            // Log::notice(json_encode($categoriaC));
+            // Log::notice(json_encode($query));
 
+        }
     }
 }

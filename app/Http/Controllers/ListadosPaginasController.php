@@ -25,19 +25,20 @@ class ListadosPaginasController extends Controller
         // $facturaEstado = 1; // Activo
         $parametros = [];
 
-        if ($request['roleName'] == "vendedor") { // si es vendedor solo devuelvo sus facturas
-            // vendedor
-            // supervisor
-            // administrador
+        // if ($request['roleName'] == "vendedor") { // si es vendedor solo devuelvo sus facturas
+        //     // vendedor
+        //     // supervisor
+        //     // administrador
 
-            $parametros[] = ["user_id", $request['userId']];
-        }
+        //     $parametros[] = ["user_id", $request['userId']];
+        // }
 
         if (!is_null($request['estado'])) $parametros[] = ["status", $request['estado']];
         if (!is_null($request['tipo_venta'])) $parametros[] = ["tipo_venta", $request['tipo_venta']];
         if (!is_null($request['status_pagado'])) $parametros[] = ["status_pagado", $request['status_pagado']];
         if (!is_null($request['status_entrega'])) $parametros[] = ["entregado", $request['status_entrega']];
         if (!is_null($request['despachado'])) $parametros[] = ["despachado", $request['despachado']];
+        if (!is_null($request['userId']) && $request['userId'] != 0) $parametros[] = ["user_id", $request['userId']];
         if (!is_null($request['created_at'])) {
             $created_at = Carbon::parse($request['created_at']);
             $parametros[] = ["created_at", '>=', $created_at . " 00:00:00"];

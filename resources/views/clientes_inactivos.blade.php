@@ -162,8 +162,8 @@
                         <th>DÍAS COBRO</th>
                         <th>DIRECCION DE CASA</th>
                         <th>DIRECCION DE NEGOCIO</th>
-                        <th>CATEGORIA</th>
-                        <th>FRECUENCIA</th>
+                        <!-- <th>CATEGORIA</th>
+                        <th>FRECUENCIA</th> -->
                     </tr>
                 </thead>
                 <tbody>
@@ -177,8 +177,8 @@
                         <td>{{ $cliente->dias_cobro }}</td>
                         <td>{{ $cliente->direccion_casa }}</td>
                         <td>{{ $cliente->direccion_negocio }}</td>
-                        <td>{{ $cliente->categoria->descripcion }}</td>
-                        <td>{{ $cliente->frecuencia ? $cliente->frecuencia->descripcion : "-"}}</td>
+                        <!-- <td>{{ $cliente->categoria->descripcion }}</td>
+                        <td>{{ $cliente->frecuencia ? $cliente->frecuencia->descripcion : "-"}}</td> -->
 
                     </tr>
                     @endforeach

@@ -162,9 +162,16 @@ class FacturaController extends Controller
             // // dd(json_encode($model_has_roles));
             // if ($model_has_roles->role_id != 2) { // si no es admin que valide lista negra
             //     // verifico si el cliente esta en lista negra
-  
+
             // }
 
+            if (!preg_match('/^\d{13}[A-Za-z]$/', $cliente->cedula)) {
+                return response()->json([
+                    "mensaje" => 'El cliente <a href="./cliente/editar/'.$cliente->id.'" target="_blank">'. $cliente->nombreCompleto .'</a> debe actualizar su cédula por una valida para poder avanzar.', 
+                    "cliente" => $cliente
+                ],400);
+            }
+            return response()->json(["mensaje" => "El"], 400);
             if ($cliente->categoria->tipo == "DP") {
                 return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos. Pertenece a la lista depuración."], 400);
             }
@@ -176,7 +183,7 @@ class FacturaController extends Controller
             if (count($facturasMora60_90) > 0) {
                 foreach ($facturasMora60_90 as $facturaMora60_90) { // valido todas sus facturas, para ver si tiene una en mora
                     $fechaPasado60DiasVencimiento = Carbon::parse($facturaMora60_90->created_at)->addDays(60)->toDateTimeString();
-                    
+
                     if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaHoy) >= 60) {
                         $categoriaListaNegra =  Categoria::where([
                             ['tipo', '=', "LN"],

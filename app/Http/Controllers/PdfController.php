@@ -462,7 +462,7 @@ class PdfController extends Controller
     {
         $dataQuery = clientesInactivosQuery($request);
 
-        $data['clientes'] = array_chunk(json_decode(json_encode($dataQuery)), 9);
+        $data['clientes'] = array_chunk(json_decode(json_encode($dataQuery)), 13);
 
 
         $data = [

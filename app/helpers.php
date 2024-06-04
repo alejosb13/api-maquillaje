@@ -1812,6 +1812,31 @@ function clientesInactivosQuery($request)
         $query = $query . " AND c.user_id = " . $request->userId;
     }
 
+    if (isset($request->diasCobros)) {
+        if (count($request->diasCobros) > 0) {
+            $diasCobros = $request->diasCobros;
+
+            $query = $query . ' AND ';
+            foreach ($diasCobros as $index => $diaCobro) {
+                // array_push($condicionDiasCobro, ['dias_cobro', 'LIKE', '%' . $dia . '%', "or"]);
+                $query = $query . 'c.dias_cobro LIKE "%' . $diaCobro . '%"';
+                if(count($diasCobros) > ($index+1) ){
+                    $query = $query . ' OR ';
+                }
+            }
+        }
+    }
+
+    // $clientes->when($request->diasCobros, function ($q) use ($request) {
+    //     $query = $q;
+    //     $dias = explode(",", $request->diasCobros);
+    //     $condicionDiasCobro = [];
+    //     foreach ($dias as $dia) {
+    //         array_push($condicionDiasCobro, ['dias_cobro', 'LIKE', '%' . $dia . '%', "or"]);
+    //     }
+    //     return $query->where($condicionDiasCobro);
+    // });
+
     $clientes = DB::select($query);
 
     if (count($clientes) > 0) {
@@ -2144,29 +2169,29 @@ function ListadoCostosProductosVendidos($request)
         )
         ->groupBy('factura_detalles.producto_id');
 
-        $todosLosProductos = $productoVendidos->get();
-        foreach ($todosLosProductos as $productoVentaTotal) {
+    $todosLosProductos = $productoVendidos->get();
+    foreach ($todosLosProductos as $productoVentaTotal) {
 
-    
-            $inversion = InversionDetail::where([
-                ["codigo", "=", $productoVentaTotal->id],
-                ["updated_at", "=", DB::raw('(
+
+        $inversion = InversionDetail::where([
+            ["codigo", "=", $productoVentaTotal->id],
+            ["updated_at", "=", DB::raw('(
                             SELECT MAX(updated_at)
                             FROM inversion_details
                         )')]
-            ])->first();
+        ])->first();
 
-            if ($inversion) {
-                $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
-            } else {
-                $costo_opcional = CostosVentas::where([
-                    ["producto_id", "=", $productoVentaTotal->id]
-                ])->first();
-                if ($costo_opcional) {
-                    $response["costoTotal"] += decimal($costo_opcional->costo * $productoVentaTotal->cantidad);
-                }
+        if ($inversion) {
+            $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
+        } else {
+            $costo_opcional = CostosVentas::where([
+                ["producto_id", "=", $productoVentaTotal->id]
+            ])->first();
+            if ($costo_opcional) {
+                $response["costoTotal"] += decimal($costo_opcional->costo * $productoVentaTotal->cantidad);
             }
         }
+    }
 
     if ($request->disablePaginate && $request->disablePaginate == 1) {
         $productoVendidos = $productoVendidos->get();

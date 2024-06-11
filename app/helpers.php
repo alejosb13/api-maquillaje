@@ -1314,9 +1314,15 @@ function cambiarClientesAListaNegraFacturasMora60_90()
 
     if (count($facturas) > 0) {
         foreach ($facturas as $factura) { // valido todas sus facturas, para ver si tiene una en mora
-            $fechaPasado60DiasVencimiento = Carbon::parse($factura->created_at)->addDays(60)->toDateTimeString();
+            // $fechaPasado60DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(60)->toDateTimeString();
 
-            if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaHoy) >= 60) {
+            $fechaPasado60DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(61)->toDateTimeString();
+            $fechaPasado90DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(91)->toDateTimeString();
+            // $fechaPasado60DiasVencimiento = Carbon::parse($factura->created_at)->addDays(60)->toDateTimeString();
+            // $fechaPasado90DiasVencimiento = Carbon::parse($factura->created_at)->addDays(90)->toDateTimeString();
+
+            if ($fechaHoy->gte($fechaPasado60DiasVencimiento)) {
+                // if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaHoy) >= 60) {
                 $clienteEnMora = Cliente::find($factura->cliente_id);
                 $clienteEnMora->categoria_id = $categoriaListaNegra->id; // agrego a lista negra por estas en mora de 60 dias o mas
                 $clienteEnMora->save();
@@ -1820,7 +1826,7 @@ function clientesInactivosQuery($request)
             foreach ($diasCobros as $index => $diaCobro) {
                 // array_push($condicionDiasCobro, ['dias_cobro', 'LIKE', '%' . $dia . '%', "or"]);
                 $query = $query . 'c.dias_cobro LIKE "%' . $diaCobro . '%"';
-                if(count($diasCobros) > ($index+1) ){
+                if (count($diasCobros) > ($index + 1)) {
                     $query = $query . ' OR ';
                 }
             }
@@ -1929,10 +1935,10 @@ function mora30_60Query($request)
     if (count($facturas) > 0) {
 
         foreach ($facturas as $factura) {
-            // $fechaPasado30DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(30)->toDateTimeString();
-            // $fechaPasado60DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(60)->toDateTimeString();
-            $fechaPasado30DiasVencimiento = Carbon::parse($factura->created_at)->addDays(30)->toDateTimeString();
-            $fechaPasado60DiasVencimiento = Carbon::parse($factura->created_at)->addDays(60)->toDateTimeString();
+            $fechaPasado30DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(1)->toDateTimeString();
+            $fechaPasado60DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(61)->toDateTimeString();
+            //$fechaPasado30DiasVencimiento = Carbon::parse($factura->created_at)->addDays(30)->toDateTimeString();
+            //$fechaPasado60DiasVencimiento = Carbon::parse($factura->created_at)->addDays(60)->toDateTimeString();
 
             if ($fechaActual->gte($fechaPasado30DiasVencimiento) && $fechaActual->lte($fechaPasado60DiasVencimiento)) {
                 $factura->user;
@@ -1942,7 +1948,7 @@ function mora30_60Query($request)
                 $response["total_saldo"] += $factura->saldo_restante;
 
                 // $factura->diferenciaDias = Carbon::parse($factura->fecha_vencimiento)->diffInDays($fechaActual);
-                $factura->diferenciaDias = Carbon::parse($factura->created_at)->diffInDays($fechaActual);
+                $factura->diferenciaDias = Carbon::parse($fechaPasado30DiasVencimiento)->diffInDays($fechaActual);
 
                 array_push($response["factura"], $factura);
             }
@@ -1984,13 +1990,13 @@ function mora60_90Query($request)
 
         foreach ($facturas as $factura) {
 
-            // $fechaPasado60DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(60)->toDateTimeString();
-            // $fechaPasado90DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(90)->toDateTimeString();
-            $fechaPasado60DiasVencimiento = Carbon::parse($factura->created_at)->addDays(60)->toDateTimeString();
-            $fechaPasado90DiasVencimiento = Carbon::parse($factura->created_at)->addDays(90)->toDateTimeString();
+            $fechaPasado60DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(61)->toDateTimeString();
+            $fechaPasado90DiasVencimiento = Carbon::parse($factura->fecha_vencimiento)->addDays(91)->toDateTimeString();
+            // $fechaPasado60DiasVencimiento = Carbon::parse($factura->created_at)->addDays(60)->toDateTimeString();
+            // $fechaPasado90DiasVencimiento = Carbon::parse($factura->created_at)->addDays(90)->toDateTimeString();
 
-            // if ($fechaActual->gte($fechaPasado60DiasVencimiento) && $fechaActual->lte($fechaPasado90DiasVencimiento)) {
-            if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaActual) >= 60) {
+            if ($fechaActual->gte($fechaPasado60DiasVencimiento)) {
+                //if (Carbon::parse($fechaPasado60DiasVencimiento)->diffInDays($fechaActual) >= 31) {
 
 
                 if ($factura->cliente->categoria->tipo != "DP") { // si no pertenece a depurados lo agrego
@@ -2002,7 +2008,7 @@ function mora60_90Query($request)
                     $response["total_saldo"] += $factura->saldo_restante;
 
                     // $factura->diferenciaDias = Carbon::parse($factura->fecha_vencimiento)->diffInDays($fechaActual);
-                    $factura->diferenciaDias = Carbon::parse($factura->created_at)->diffInDays($fechaActual);
+                    $factura->diferenciaDias = Carbon::parse($factura->fecha_vencimiento)->diffInDays($fechaActual);
                     array_push($response["factura"], $factura);
                 }
             }

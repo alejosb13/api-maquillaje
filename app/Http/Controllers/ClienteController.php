@@ -76,7 +76,7 @@ class ClienteController extends Controller
             'telefono' => 'nullable|numeric',
             'direccion_casa' => 'required|string|max:180',
             'direccion_negocio' => 'nullable|max:180',
-            'cedula' => 'required|string|max:22|unique:clientes,cedula',
+            // 'cedula' => 'required|string|max:22|unique:clientes,cedula',
             'dias_cobro' => 'string|max:120',
             // 'fecha_vencimiento' => 'required|date',
             'estado' => 'required|numeric|max:1',
@@ -97,7 +97,7 @@ class ClienteController extends Controller
                 'telefono' => $request['telefono'],
                 'direccion_casa' => $request['direccion_casa'],
                 'direccion_negocio' => $request['direccion_negocio'],
-                'cedula' => $request['cedula'],
+                'cedula' => isset($request['cedula']) && !empty($request['cedula']) ? $request['cedula'] : "",
                 'dias_cobro' => $request['dias_cobro'],
                 'user_id' => ($request['user_id'] > 0) ? $request['user_id'] : NULL,
                 // 'fecha_vencimiento' => $request['fecha_vencimiento'],
@@ -280,7 +280,7 @@ class ClienteController extends Controller
         if ($clienteDelete) {
             $response[] = 'El cliente fue eliminado con éxito.';
 
-            $response[] = $cliente ;
+            $response[] = $cliente;
             $status = 200;
         } else {
             $response[] = 'Error al eliminar el cliente.';
@@ -341,6 +341,43 @@ class ClienteController extends Controller
         } else {
             $response[] = "El Valor de Id debe ser numerico.";
         }
+
+        return response()->json($response, $status);
+    }
+
+    function modificarDiasCobros(Request $request, $id)
+    {
+        $response = [];
+        $status = 400;
+
+        if (!is_numeric($id)) {
+            $response[] = "El Valor de Id debe ser numérico.";
+            return response()->json($response, $status);
+        }
+
+        $cliente =  Cliente::find($id);
+
+        if (!$cliente) {
+            $response[] = "El cliente no existe.";
+            return response()->json($response, $status);
+        }
+
+        $dias = $request->diasCobro;
+        // print_r($dias);
+        $clienteUpdate = $cliente->update([
+            'dias_cobro' => implode(",", $dias),
+        ]);
+
+        if ($clienteUpdate) {
+            $response["mensaje"] = 'El cliente fue modificado con éxito.';
+
+            $response["cliente"] = $cliente;
+            $status = 200;
+        } else {
+            $response["mensaje"] = 'Error al modificar el cliente.';
+        }
+
+
 
         return response()->json($response, $status);
     }

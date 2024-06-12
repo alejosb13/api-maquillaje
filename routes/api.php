@@ -185,14 +185,15 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::post('finanzas/productos-vendidos', [CostosController::class, 'saveCostosVentas']);
     Route::put('finanzas/productos-vendidos/{id}', [CostosController::class, 'updateCostosVentas']);
     Route::delete('finanzas/productos-vendidos/{id}', [CostosController::class, 'deleteCostoVenta']);
-    Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
-    Route::get('finanzas/estado-finanzas', [GastoController::class,'EstadoResultado']);
+    
     
     Route::resource('finanzas/gastos', GastoController::class);
     
     Route::post('talonarios/lote', [TalonariosControler::class, 'talonario']);
     Route::resource('talonarios', TalonariosControler::class);
 });
+Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
+Route::get('finanzas/estado-finanzas', [GastoController::class,'EstadoResultado']);
 
 
 

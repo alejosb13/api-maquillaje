@@ -263,16 +263,17 @@ class GastoController extends Controller
         // dd($dataRequest);
         // dd($resultCostosProductosVendidos["totalProductos"]);
         $response["costo_listado"][] = $resultCostosProductosVendidos["productos"];
-
-        foreach ($resultCostosProductosVendidos["productos"] as $costo) {
-            if ($costo->inversion) {
-                $response["costo_total"] += $costo->inversion->costo * $costo->cantidad;
-            } else {
-                if ($costo->costo_opcional) {
-                    $response["costo_total"] += $costo->costo_opcional->costo * $costo->cantidad;
-                }
-            }
-        }
+        $response["costo_total"] = $resultCostosProductosVendidos["costoTotal"];
+        // dd($resultCostosProductosVendidos["costoTotal"]);
+        // foreach ($resultCostosProductosVendidos["productos"] as $costo) {
+        //     if ($costo->inversion) {
+        //         $response["costo_total"] += $costo->inversion->costo * $costo->cantidad;
+        //     } else {
+        //         if ($costo->costo_opcional) {
+        //             $response["costo_total"] += $costo->costo_opcional->costo * $costo->cantidad;
+        //         }
+        //     }
+        // }
 
         $responseGastos = ListadoGastos($dataRequest);
         $response["gasto_general_total"] = $responseGastos["total_monto"];

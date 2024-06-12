@@ -2110,20 +2110,24 @@ function ListadoCostosProductosVendidos($request)
     if (empty($request->dateIni)) {
         $dateIni = Carbon::now();
     } else {
+        // dd($request);
         $dateIni = Carbon::parse($request->dateIni);
     }
 
     if (empty($request->dateFin)) {
         $dateFin = Carbon::now();
     } else {
+        // dd($request);
         $dateFin = Carbon::parse($request->dateFin);
     }
+    // dd($request->all());
     $facturasStorage = Factura::select("*")
         // ->where('status_pagado', $request->status_pagado ? $request->status_pagado : 0) // si envian valor lo tomo, si no por defecto asigno por pagar = 0
         ->where('status', 1);
 
     // dd([ $request->allDates]);
-    if (isset($request->allDates) && $request->allDates == "false") {
+    if (isset($request->allDates) && $request->allDates == false) {
+        // dd($request);
         $facturasStorage = $facturasStorage->whereBetween(
             'created_at',
             [
@@ -2177,15 +2181,16 @@ function ListadoCostosProductosVendidos($request)
 
     $todosLosProductos = $productoVendidos->get();
     foreach ($todosLosProductos as $productoVentaTotal) {
-
-
         $inversion = InversionDetail::where([
             ["codigo", "=", $productoVentaTotal->id],
-            ["updated_at", "=", DB::raw('(
-                            SELECT MAX(updated_at)
-                            FROM inversion_details
-                        )')]
-        ])->first();
+            ["estado", "=", 1],
+            // ["updated_at", "=", DB::raw('(
+            //     SELECT MAX(updated_at)
+            //     FROM inversion_details
+            //     )')]
+        ])
+            ->orderBy("updated_at", "desc")
+            ->first();
 
         if ($inversion) {
             $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
@@ -2210,13 +2215,22 @@ function ListadoCostosProductosVendidos($request)
             ["producto_id", "=", $productoVendido->id]
         ])->first();
 
+        // DB::enableQueryLog();
         $productoVendido->inversion = InversionDetail::where([
             ["codigo", "=", $productoVendido->id],
-            ["updated_at", "=", DB::raw('(
-                        SELECT MAX(updated_at)
-                        FROM inversion_details
-                    )')]
-        ])->first();
+            ["estado", "=", 1],
+            // ["updated_at", "=", DB::raw('(
+            //     SELECT MAX(updated_at)
+            //     FROM inversion_details
+            //     )')]
+        ])
+            ->orderBy("updated_at", "desc")
+            ->first();
+
+        // $query = DB::getQueryLog();
+        // if ($productoVendido->id == 129) {
+        //     dd($query);
+        // }
     }
     $response["productos"] = $productoVendidos;
     $response["totalProductos"] = $contadorProductos;
@@ -2246,9 +2260,26 @@ function ListadoGastos($request)
         return $q->where('estado', $request->estado);
     });
 
+    $gastos->when(isset($request->metodoPago) && $request->metodoPago != 99, function ($q) use ($request) {
+        return $q->where('tipo_pago', $request->metodoPago);
+    });
+
     $gastos->when(isset($request->tipoGasto) && $request->tipoGasto != 99, function ($q) use ($request) {
         return $q->where('tipo', $request->tipoGasto);
     });
+
+    // filtrados para campos numericos
+    $gastos->when(isset($request->filter) && is_numeric($request->filter), function ($q) use ($request) {
+        $query = $q;
+        // id de recibos 
+        $query = $query->where(
+            [
+                ['numero', 'LIKE', '%' . $request->filter . '%'],
+            ]
+        );
+
+        return $query;
+    }); // Fin Filtrado
 
     // filtrados para campos numericos
     $gastos->when(isset($request->filter) && !is_numeric($request->filter), function ($q) use ($request) {
@@ -2256,7 +2287,7 @@ function ListadoGastos($request)
         // id de recibos 
         $query = $query->where(
             [
-                ['numero', 'LIKE', '%' . $request->filter . '%'],
+                ['conceptualizacion', 'LIKE', '%' . $request->filter . '%'],
             ]
         );
 

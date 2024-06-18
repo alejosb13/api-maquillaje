@@ -2126,7 +2126,7 @@ function ListadoCostosProductosVendidos($request)
         ->where('status', 1);
 
     // dd([ $request->allDates]);
-    if (isset($request->allDates) && $request->allDates == false) {
+    if (isset($request->allDates) && ($request->allDates == false || $request->allDates == "false")) {
         // dd($request);
         $facturasStorage = $facturasStorage->whereBetween(
             'created_at',
@@ -2193,7 +2193,8 @@ function ListadoCostosProductosVendidos($request)
             ->first();
 
         if ($inversion) {
-            $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
+            // $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
+            $response["costoTotal"] += decimal($inversion->costo_total * $productoVentaTotal->cantidad);
         } else {
             $costo_opcional = CostosVentas::where([
                 ["producto_id", "=", $productoVentaTotal->id]
@@ -2252,7 +2253,8 @@ function ListadoGastos($request)
     $gastos =  Gasto::query();
 
     // ** Filtrado por rango de fechas 
-    $gastos->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
+    //     if (isset($request->allDates) && ($request->allDates == false||$request->allDates== "false")) {
+    $gastos->when(isset($request->allDates) && ($request->allDates == false || $request->allDates == "false"), function ($q) use ($dateIni, $dateFin) {
         return $q->whereBetween('fecha_comprobante', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
     });
 

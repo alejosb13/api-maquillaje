@@ -298,13 +298,13 @@ class GastoController extends Controller
         $response["incentivos_total"]  = decimal($response["incentivos_vendedor_total"]  + $response["incentivos_supervisor_total"]);
 
         $response["gasto_total"]  = decimal($response["incentivos_total"] + $response["gasto_general_total"]);
-        $response["gasto_total_porcentaje"]  = ($response["ventas_total"]) ? decimal($response["gasto_total"] / $response["ventas_total"]) : 0;
+        $response["gasto_total_porcentaje"]  = ($response["ventas_total"]) ? decimal(($response["gasto_total"] / $response["ventas_total"]* 100) ) : 0;
 
-        $response["costo_total_porcentaje"]  = ($response["ventas_total"]) ? decimal($response["costo_total"] / $response["ventas_total"]) : 0;
+        $response["costo_total_porcentaje"]  = ($response["ventas_total"]) ? decimal(($response["costo_total"] / $response["ventas_total"]) * 100) : 0;
 
         $response["utilidad_bruta_total"] = decimal($response["ventas_total"] - $response["costo_total"]);
         $response["utilidad_neta_total"] = decimal($response["utilidad_bruta_total"] - $response["gasto_total"]);
-        $response["utilidad_neta_total_porcentaje"]  = $response["ventas_total"] ? decimal($response["utilidad_neta_total"] / $response["ventas_total"]) : 0;
+        $response["utilidad_neta_total_porcentaje"]  = $response["ventas_total"] ? decimal(($response["utilidad_neta_total"] / $response["ventas_total"]) * 100) : 0;
         return response()->json($response, 200);
     }
 }

@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ClienteController extends Controller
 {
@@ -66,16 +67,19 @@ class ClienteController extends Controller
             'categoria_id' => 'required|numeric',
             // 'frecuencia_id' => 'required|numeric',
             'user_id' => 'nullable|numeric',
-            'nombreCompleto' => 'required|string|max:80|unique:clientes,nombreCompleto',
+            // 'nombreCompleto' => 'required|string|max:80|unique:clientes,nombreCompleto',
+            'nombreCompleto' => ['required','string', Rule::unique('clientes', 'nombreCompleto')->where('estado', 1)],
             'nombreEmpresa' => 'required|string|max:80',
             // 'celular' => 'required|numeric|unique:clientes,celular|digits_between:10,12',
             // 'telefono' => 'nullable|digits_between:10,12',
             // 'celular' => 'required|numeric',
             // 'telefono' => 'nullable',
-            'celular' => 'required|numeric|unique:clientes,celular',
+            // 'celular' => 'required|numeric|unique:clientes,celular',
+            'celular' => ['required','numeric', Rule::unique('clientes', 'celular')->where('estado', 1)],
             'telefono' => 'nullable|numeric',
             'direccion_casa' => 'required|string|max:180',
             'direccion_negocio' => 'nullable|max:180',
+            'cedula' => ['string', Rule::unique('clientes', 'cedula')->where('estado', 1)],
             // 'cedula' => 'required|string|max:22|unique:clientes,cedula',
             'dias_cobro' => 'string|max:120',
             // 'fecha_vencimiento' => 'required|date',
@@ -197,15 +201,24 @@ class ClienteController extends Controller
                     // 'frecuencia_id' => 'required|numeric',
                     'user_id' => 'nullable|numeric',
                     // 'nombreCompleto' => 'required|string|max:80',
-                    'nombreCompleto' => 'required|string|max:80|unique:clientes,nombreCompleto,' . $id,
+                    // 'nombreCompleto' => 'required|string|max:80|unique:clientes,nombreCompleto,' . $id,
+                    'nombreCompleto' =>  ['required', 'string', Rule::unique('clientes', 'nombreCompleto')->where(function ($query) {
+                        return $query->where('estado', 1);
+                    })->ignore($id)],
                     'nombreEmpresa' => 'required|string|max:80',
                     // 'celular' => 'required|numeric|unique:clientes,celular,'.$id.'|digits_between:10,12',
                     // 'telefono' => 'nullable|digits_between:10,12',
-                    'celular' => 'required|numeric|unique:clientes,celular,' . $id,
+                    // 'celular' => 'required|numeric|unique:clientes,celular,' . $id,
+                    'celular' => ['required', 'numeric', Rule::unique('clientes', 'celular')->where(function ($query) {
+                        return $query->where('estado', 1);
+                    })->ignore($id)],
                     'telefono' => 'nullable|numeric',
                     'direccion_casa' => 'required|string|max:180',
                     'direccion_negocio' => 'nullable|max:180',
-                    'cedula' => 'required|string|max:22|unique:clientes,cedula,' . $id,
+                    // 'cedula' => 'required|string|max:22|unique:clientes,cedula,' . $id,
+                    'cedula' => ['required', 'string', Rule::unique('clientes', 'cedula')->where(function ($query) {
+                        return $query->where('estado', 1);
+                    })->ignore($id)],
                     'dias_cobro' => 'string|max:120',
                     // 'fecha_vencimiento' => 'required|date',
                     'estado' => 'required|numeric|max:1',

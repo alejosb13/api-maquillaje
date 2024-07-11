@@ -2,6 +2,7 @@
 
 use App\Models\Categoria;
 use App\Models\Cliente;
+use App\Models\ClientesInactivosNotas;
 use App\Models\ClientesReactivados;
 use App\Models\CostosVentas;
 use App\Models\Factura;
@@ -1844,15 +1845,35 @@ function clientesInactivosQuery($request)
     // });
 
     $clientes = DB::select($query);
+    $clientesFiltrados = [];
 
     if (count($clientes) > 0) {
         foreach ($clientes as $cliente) {
             $cliente->frecuencia = Frecuencia::find($cliente->frecuencia_id);
             $cliente->categoria = Categoria::find($cliente->categoria_id);
             $cliente->user = User::find($cliente->user_id);
+
+            $nota = ClientesInactivosNotas::where("cliente_id", $cliente->id)->first();
+            if ($nota) $nota->notaValueString();
+
+            $cliente->nota = $nota;
+
+            if (isset($request->tipos)) {
+                if ($request->tipos == 0) {
+                    $clientesFiltrados[] = $cliente;
+                } else {
+                    if (!$nota) continue;
+
+                    if ($request->tipos == $cliente->nota->tipos) {
+                        $clientesFiltrados[] = $cliente;
+                    }
+                }
+            } else {
+                $clientesFiltrados[] = $cliente;
+            }
         }
 
-        $response = $clientes;
+        $response = $clientesFiltrados;
     }
 
     // print_r(count($cliente));

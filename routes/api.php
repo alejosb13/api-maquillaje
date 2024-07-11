@@ -191,9 +191,12 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     
     Route::post('talonarios/lote', [TalonariosControler::class, 'talonario']);
     Route::resource('talonarios', TalonariosControler::class);
+
+    Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
+    Route::get('finanzas/estado-finanzas', [GastoController::class,'EstadoResultado']);
+    
+    Route::post('logistica/clientes-inactivos/notas', [LogisticaController::class,'clienteInactivoNotas']);
 });
-Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
-Route::get('finanzas/estado-finanzas', [GastoController::class,'EstadoResultado']);
 
 
 

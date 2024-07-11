@@ -171,7 +171,7 @@
                     <tr>
                         <td>{{ $historico->id }}</td>
                         <td>{{ $historico->nombreCompleto }}</td>
-                        <td>{{ $historico->direccion_casa }}</td>
+                        <td>{{ $historico->direccion_negocio }}</td>
                         <td>{{ $historico->celular }}</td>
                         <td>${{ $historico->saldo }}</td>
                         @if($historico->ultimoAbono)

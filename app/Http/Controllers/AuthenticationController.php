@@ -72,6 +72,7 @@ class AuthenticationController extends Controller
             }
 
             $this->resetCategory();
+            cambiarClientesAListaNegraFacturasMora60_90();
 
             $token = $user->createToken('tokens')->plainTextToken;
             $newUser = DB::table('users')

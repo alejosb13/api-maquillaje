@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\ClientesInactivosNotas;
 use App\Models\Producto;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class LogisticaController extends Controller
 {
@@ -336,6 +338,48 @@ class LogisticaController extends Controller
 
         $contadorIncentivos["porcentaje20"] = decimal($contadorIncentivos["total"] * 0.20);
         $response["incentivos"] = $contadorIncentivos;
+
+        return response()->json($response, 200);
+    }
+
+    function clienteInactivoNotas(Request $request)
+    {
+        // Validar los datos de entrada
+        $validation = Validator::make($request->all(), [
+            'cliente_id' => 'required|numeric',
+            'tipos' => 'required|numeric',
+        ]);
+
+        if ($validation->fails()) {
+            return response()->json([$validation->errors()], 400);
+        }
+
+        // Obtener el cliente por ID
+        $cliente = ClientesInactivosNotas::where("cliente_id", $request->cliente_id)->first();
+
+        if ($cliente) {
+            // Si el cliente existe, actualizar el tipo
+            $cliente->tipos = $request->tipos;
+            $cliente->save();
+
+            $response = [
+                'status' => 'success',
+                'message' => 'Cliente actualizado con éxito.',
+                'cliente' => $cliente,
+            ];
+        } else {
+            // Si el cliente no existe, crear un nuevo registro
+            $cliente = ClientesInactivosNotas::create([
+                'cliente_id' => $request->cliente_id,
+                'tipos' => $request->tipos,
+            ]);
+
+            $response = [
+                'status' => 'success',
+                'message' => ' creado con éxito.',
+                'cliente' => $cliente,
+            ];
+        }
 
         return response()->json($response, 200);
     }

@@ -803,7 +803,7 @@ class PdfController extends Controller
             $dataExcell[] = array(
                 $cliente->id,
                 $cliente->nombreCompleto,
-                $cliente->direccion_casa,
+                $cliente->direccion_negocio,
                 $cliente->celular,
                 $cliente->saldo,
                 ($cliente->ultimoAbono) ? Carbon::parse($cliente->ultimoAbono->created_at)->format('j-m-Y') : "No posee abonos",

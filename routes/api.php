@@ -207,6 +207,8 @@ Route::get('list/abonos', [ListadosPaginasController::class, 'abonosCreditosList
 Route::get('list/clientes', [ListadosPaginasController::class, 'clientesList']);
 Route::get('list/productos-clientes', [ListadosPaginasController::class, 'FacturaDetailClientList']);
 Route::get('list/productos', [ListadosPaginasController::class, 'ProductosList']);
+Route::get('list/usuarios', [ListadosPaginasController::class, 'UsuariosList']);
+Route::get('list/categorias', [ListadosPaginasController::class, 'CategoriaList']);
 
 Route::get('configuracion/crons', function () {
     Artisan::call('schedule:run');

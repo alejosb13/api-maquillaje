@@ -720,8 +720,86 @@ class ListadosPaginasController extends Controller
             $response = $Productos;
         }
 
+        return response()->json($response, $status);
+    }
 
+    public function UsuariosList(Request $request)
+    {
+        // dd($request->all());
+        $response = [];
+        $status = 200;
 
+        // DB::enableQueryLog();
+
+        $Usuarios =  User::query();
+
+        $Usuarios->when(isset($request->estado), function ($q) use ($request) {
+            return $q->where('estado', $request->estado);
+        });
+
+        if ($request->disablePaginate == 0) {
+            $Usuarios = $Usuarios->orderBy('created_at', 'desc')->paginate(15);
+        } else {
+            $Usuarios = $Usuarios->orderBy('created_at', 'desc')->get();
+        }
+
+        if (count($Usuarios) > 0) {
+            foreach ($Usuarios as $Usuario) {
+
+                if (isset($request->factura) && $request->factura == 1) $Usuario->factura;
+
+                if (isset($request->recibo) && $request->recibo == 1) {
+                    if ($Usuario->recibo != null) {
+                        $Usuario->ultimo_recibo = ReciboHistorial::where(
+                            [
+                                ["recibo_id", $Usuario->recibo->id],
+                                // ["estado", 1],
+                            ]
+                        )->orderBy('created_at', 'desc')->first();
+                    }
+                }
+
+                if (isset($request->meta) && $request->meta == 1) $Usuario->meta;
+
+                if (isset($request->recibosRangosSinTerminar) && $request->recibosRangosSinTerminar == 1) {
+                    $Usuario->recibosRangosSinTerminar = $Usuario->RecibosRangosSinTerminar()->where([
+                        ["estado", 1],
+                    ])->get();
+                }
+
+                $role_id = DB::table('model_has_roles')->where('model_id', $Usuario->id)->first();
+                $Usuario->role_id = $role_id->role_id;
+            }
+
+            $response = $Usuarios;
+        }
+
+        return response()->json($response, $status);
+    }
+
+    public function CategoriaList(Request $request)
+    {
+        // dd($request->all());
+        $response = [];
+        $status = 200;
+
+        // DB::enableQueryLog();
+
+        $Categorias =  Categoria::query();
+
+        $Categorias->when(isset($request->estado), function ($q) use ($request) {
+            return $q->where('estado', $request->estado);
+        });
+
+        if ($request->disablePaginate == 0) {
+            $Categorias = $Categorias->orderBy('created_at', 'desc')->paginate(15);
+        } else {
+            $Categorias = $Categorias->orderBy('created_at', 'desc')->get();
+        }
+
+        if (count($Categorias) > 0) {
+            $response = $Categorias;
+        }
 
         return response()->json($response, $status);
     }

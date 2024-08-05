@@ -15,11 +15,12 @@ class ClientesInactivosNotas extends Model
     ];
 
     public $tiposNotas = [
-        1=>"Fuera del país",
-        2=>"Inconformidad",
-        3=>"Cambio de dirección",
-        4=>"Código duplicado",
-        5=>"Cierre de negocio",
+        0 => "Sin seleccionar",
+        1 => "Fuera del país",
+        2 => "Inconformidad",
+        3 => "Cambio de dirección",
+        4 => "Código duplicado",
+        5 => "Cierre de negocio",
     ];
 
     public function notaValueString()

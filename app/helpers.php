@@ -1713,6 +1713,10 @@ function RecuperacionRecibosMensualQuery($request)
 function clienteNuevo($request)
 {
     $response = [];
+    $condiciones = [
+        ['status', 1],
+        ['monto', '>', 1],
+    ];
 
     // $userId = $request['userId'];
     if (empty($request->dateIni)) {
@@ -1726,45 +1730,70 @@ function clienteNuevo($request)
     } else {
         $dateFin = Carbon::parse($request->dateFin);
     }
+    if ($request->userId != 0) {
+        // $clienteStore = $clienteStore->where('clientes.user_id', $request->userId);
+        $condiciones[] = ["user_id", $request->userId];
+    }
 
     // DB::enableQueryLog();
-    $clienteStore = Cliente::select("*")->where('estado', 1);
+
+
+    $clienteStore =  Cliente::whereDoesntHave('facturas', function ($query) use ($dateIni, $condiciones) {
+        // Filtra clientes que no tienen facturas anteriores al primer día del mes actual, con facturas activas (status = 1), monto mayor a 1 y que coincidan con el user_id 
+        $query
+            ->where('created_at', '<', $dateIni->toDateString() . " 00:00:00")
+            ->where($condiciones);
+    })
+        ->with(['frecuencia', 'categoria', 'facturas'])
+        ->whereHas('facturas', function ($query) use ($dateIni, $dateFin, $condiciones) {
+            // Asegura que el cliente tenga al menos una factura en el rango de fechas del mes actual, con facturas activas (status = 1), saldo restante mayor a 1 y que coincidan con el user_id.
+            $query
+                ->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"])
+                ->where($condiciones);
+        });
 
     if (!$request->allDates) {
-        $clienteStore = $clienteStore->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        // $clienteStore = $clienteStore->whereBetween('facturas.created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
     }
 
-    if ($request->userId != 0) {
-        $clienteStore = $clienteStore->where('user_id', $request->userId);
-    }
+    // if ($request->userId != 0) {
+    //     $clienteStore = $clienteStore->where('clientes.user_id', $request->userId);
+    // }
+
+    // $clienteStore = $clienteStore->WhereHas('facturas', function ($query) use ($filter) {
+    //     $query->where('descripcion', 'like', '%' . $filter . '%');
+    // });
 
     $clientes_id = [];
-    $facturasQuery = Factura::where([
-        ['status', '=', 1],
-    ])->groupBy('cliente_id')->select("cliente_id")->get();
+    // $facturasQuery = Factura::where([
+    //     ['status', '=', 1],
+    //     ['saldo_restante', '>=', 1],
+    // ])->groupBy('cliente_id')->select("cliente_id")->get();
 
-    if (count($facturasQuery) > 0) {
-        foreach ($facturasQuery as $factura) {
-            $clientes_id[] = $factura->cliente_id;
-        }
-    }
+    // if (count($facturasQuery) > 0) {
+    //     foreach ($facturasQuery as $factura) {
+
+    //         $clientes_id[] = $factura->cliente_id;
+    //     }
+    // }
 
     // print_r($clientes_id);
 
-    $clientes = $clienteStore->wherein('id', $clientes_id)->get();
+    // $clientes = $clienteStore->wherein('id', $clientes_id)->get();
+    $clientes = $clienteStore->get();
 
     // $query = DB::getQueryLog();
     // print_r(json_encode($query));
-    if (count($clientes) > 0) {
-        foreach ($clientes as $cliente) {
-            $cliente->frecuencia = $cliente->frecuencia;
-            $cliente->categoria = $cliente->categoria;
-            $cliente->facturas = $cliente->facturas;
-        }
+    // if (count($clientes) > 0) {
+    //     foreach ($clientes as $cliente) {
+    //         $cliente->frecuencia = $cliente->frecuencia;
+    //         $cliente->categoria = $cliente->categoria;
+    //         $cliente->facturas = $cliente->facturas;
+    //     }
 
-        $response = $clientes;
-    }
+    // }
 
+    $response = $clientes;
 
     return $response;
 }

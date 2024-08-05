@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class DevolucionProductoController extends Controller
 {
@@ -25,22 +26,69 @@ class DevolucionProductoController extends Controller
 
         if (!is_null($request['estado'])) $parametros[] = ["estado", $request['estado']];
 
-        // dd($facturaEstado);
-        $productos =  DevolucionProducto::where($parametros)->get();
 
+        // dd($facturaEstado);
+        $productos =  DevolucionProducto::query()->with(['factura_detalle','factura_detalle.producto' => function ($query) {
+            $query->select('id', 'descripcion');
+        }, 'user'])->where($parametros);
+
+        if (empty($request->dateIni)) {
+            $dateIni = Carbon::now();
+        } else {
+            $dateIni = Carbon::parse($request->dateIni);
+        }
+
+        if (empty($request->dateFin)) {
+            $dateFin = Carbon::now();
+        } else {
+            $dateFin = Carbon::parse($request->dateFin);
+        }
+
+        $productos->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
+            return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
+        });
+
+        // ** Filtrado para string
+        $productos->when($request->filter && !is_numeric($request->filter), function ($q) use ($request) {
+            $query = $q;
+            $filter = $request->filter;
+
+            return $query->where('descripcion', 'like', '%' . $filter . '%')
+                ->orWhereHas('factura_detalle.producto', function ($query) use ($filter) {
+                    $query->where('descripcion', 'like', '%' . $filter . '%');
+                });
+        }); // Fin Filtrado por cliente
+
+        // ** Filtrado para string
+        $productos->when($request->filter && is_numeric($request->filter), function ($q) use ($request) {
+            $query = $q;
+
+            $query = $query->where(
+                [
+                    ['id', 'LIKE', '%' . $request->filter, "or"],
+                ]
+            );
+            return $query;
+        }); // Fin Filtrado por cliente
+
+        if (isset($request->disablePaginate) && $request->disablePaginate == 0) {
+            $productos = $productos->orderBy('created_at', 'desc')->paginate(15);
+        } else {
+            $productos = $productos->orderBy('created_at', 'desc')->get();
+        }
         // echo "<pre>";
         // print_r (json_encode($productos));
         // echo "</pre>";
 
-        if (count($productos) > 0) {
-            foreach ($productos as $key => $producto) {
-                $producto->factura_detalle->producto;
-                $producto->user;
-            }
+        // if (count($productos) > 0) {
+        //     foreach ($productos as $key => $producto) {
+        //         // $producto->factura_detalle->producto;
+        //         $producto->user;
+        //     }
 
-            $response = $productos;
-        }
+        // }
 
+        $response = $productos;
         return response()->json($response, $status);
     }
 
@@ -85,9 +133,9 @@ class DevolucionProductoController extends Controller
                     'estado'     => $request['estado'],
                 ]);
 
-                if($devolucionProducto){
-                    actualizarCantidadDetalleProducto($request['factura_detalle_id'],$request['cantidad']);
-                    devolverStockProducto($request['factura_detalle_id'],$request['cantidad']);
+                if ($devolucionProducto) {
+                    actualizarCantidadDetalleProducto($request['factura_detalle_id'], $request['cantidad']);
+                    devolverStockProducto($request['factura_detalle_id'], $request['cantidad']);
                 }
 
                 DB::commit();
@@ -98,13 +146,11 @@ class DevolucionProductoController extends Controller
                     'id' => $devolucionProducto->id,
                     // ]
                 ], 201);
-
             } catch (Exception $e) {
                 DB::rollback();
                 // print_r(json_encode($e));
                 return response()->json(["mensaje" => json_encode($e)], 400);
             }
-
         }
     }
 

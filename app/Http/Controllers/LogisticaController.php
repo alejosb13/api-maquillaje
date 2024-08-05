@@ -140,7 +140,7 @@ class LogisticaController extends Controller
             $response["totalMetas"] += $ventaUsuario['meta'];
             $response["totalVentas"] += $ventaUsuario['totalVentas'];
         }
-        $response["porcentaje"] = decimal(($response["totalVentas"] / $response["totalMetas"]) * 100);
+        $response["porcentaje"] = $response["totalMetas"] == 0 ? decimal(($response["totalVentas"] / $response["totalMetas"]) * 100) : 0;
 
         return response()->json($response, 200);
     }

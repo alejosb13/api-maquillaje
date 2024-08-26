@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Traits\DevolucionesSupervisorTrait;
 use App\Models\Categoria;
 use App\Models\Cliente;
 use App\Models\ClientesInactivosNotas;
@@ -871,7 +872,9 @@ function incentivoSupervisorQuery($request)
     $response = [
         "dataVendedores" => [],
         "totalFacturaVendedores2Porciento" => 0,
-        "totalFacturaVendedores" => 0
+        "totalFacturaVendedores" => 0,
+        "deducciones" => 0,
+        "deducciones_porcentaje" => 0
     ];
     $users = User::where([
         ["estado", "=", 1]
@@ -953,9 +956,23 @@ function incentivoSupervisorQuery($request)
         }
     }
 
+    $DevolucionesSupervisorTrait = new class {
+        use DevolucionesSupervisorTrait;
+    };
+
+    // Llamar a la función del trait desde la clase anónima
+    $Deducciones = $DevolucionesSupervisorTrait->deduccionesSupervisor($request);
+    // dd(json_encode($Deducciones) );
+    $response["deducciones"] = decimal($Deducciones["total"]);
+    $response["deducciones_porcentaje"] = decimal($Deducciones["total"] * 0.01);
+
+    // dd([$response["totalFacturaVendedores2Porciento"], $response["deducciones_porcentaje"]]);
+    $response["totalFacturaVendedores2Porciento"] = decimal($response["totalFacturaVendedores2Porciento"] - $response["deducciones_porcentaje"]);
+
+
     $response["totalRecuperacionVendedores"] = (float) number_format($sumaRecuperacion, 2, ".", "");
     // $response["totalFacturaVendedores"] = (float) number_format($sumaFactura, 2, ".", "");
-    // $response["totalFacturaVendedores2Porciento"] = (float) number_format($response["totalFacturaVendedores"] * 0.02, 2, ".", "");
+    //totalFacturaVendedores2Porciento = (float) number_format($response["totalFacturaVendedores"] * 0.02, 2, ".", "");
 
     // $response["totalFacturas"] = number_format($totalFacturas, 2, ".", "");
     // $response["totalFacturasX02"] = number_format($totalFacturas * 0.02, 2, ".", "");;
@@ -2181,7 +2198,8 @@ function ListadoCostosProductosVendidos($request)
         $facturasStorage = $facturasStorage->whereBetween(
             'created_at',
             [
-                $dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"
+                $dateIni->toDateString() . " 00:00:00",
+                $dateFin->toDateString() . " 23:59:59"
             ]
         );
         // print_r([$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);

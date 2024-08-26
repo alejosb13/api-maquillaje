@@ -53,6 +53,8 @@ class DashboardController extends Controller
             "dateIni" => $inicioMesActual,
             "link" => null,
             "status_pagado" => 0,
+            "disablePaginate" => $request->disablePaginate,
+            "estado" =>  $request->estado,
             "userId" => (int) $request->userId,
         ];
 

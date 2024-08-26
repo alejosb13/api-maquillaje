@@ -10,6 +10,7 @@ use App\Http\Controllers\CostosController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DevolucionFacturaController;
 use App\Http\Controllers\DevolucionProductoController;
+use App\Http\Controllers\DevolucionSupervisorController;
 use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\FacturaDetallesController;
 use App\Http\Controllers\FacturaHistorial;
@@ -163,6 +164,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('regalos/detalle/{id}', [RegalosController::class, 'regaloXdetalle']);
     Route::get('regalos/factura/{id}', [RegalosController::class, 'regalosXFactura']);
     Route::resource('regalos', RegalosController::class);
+    
 
 
     // Route::post('configuracion/migracion', [ConfiguracionController::class, 'migracion']);
@@ -196,8 +198,11 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('finanzas/estado-finanzas', [GastoController::class,'EstadoResultado']);
     
     Route::post('logistica/clientes-inactivos/notas', [LogisticaController::class,'clienteInactivoNotas']);
+    
+    Route::resource('supervisor/devolucion', DevolucionSupervisorController::class);
+    Route::get('supervisor/deducciones', [DevolucionSupervisorController::class,'deducciones']);
+    Route::delete('supervisor/deducciones/{id}', [DevolucionSupervisorController::class,'deleteDeducciones']);
 });
-
 
 
 Route::get('list/facturas', [ListadosPaginasController::class, 'facturasList']);

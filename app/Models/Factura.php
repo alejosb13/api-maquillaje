@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\FacturaDetallesController;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -62,10 +63,10 @@ class Factura extends Model
         return $this->hasMany(DevolucionFactura::class);
     }
 
-    // // one to many
-    // public function factura_historial()
-    // {
-    //     return $this->hasMany(FacturaHistorial::class);
-    // }
+    public function devolucionesProductos()
+    {
+        return $this->hasManyThrough(DevolucionProducto::class, FacturaDetallesController::class, 'factura_id', 'factura_detalle_id');
+    }
+
 }
 

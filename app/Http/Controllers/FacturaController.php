@@ -172,6 +172,20 @@ class FacturaController extends Controller
                 ], 400);
             }
 
+            if (!preg_match('/^\d{8}$/', $cliente->celular)) {
+                return response()->json([
+                    "mensaje" => 'El cliente <a href="./cliente/editar/' . $cliente->id . '" target="_blank">' . $cliente->nombreCompleto . '</a> debe actualizar el teléfono celular por uno valido para poder avanzar.',
+                    "cliente" => $cliente
+                ], 400);
+            }
+
+            if (!preg_match('/^\d{8}$/', $cliente->telefono)) {
+                return response()->json([
+                    "mensaje" => 'El cliente <a href="./cliente/editar/' . $cliente->id . '" target="_blank">' . $cliente->nombreCompleto . '</a> debe actualizar el teléfono del salón por una valida para poder avanzar.',
+                    "cliente" => $cliente
+                ], 400);
+            }
+
             if ($cliente->categoria->tipo == "DP") {
                 return response()->json(["mensaje" => "El crédito de " . $cliente->nombreCompleto . " esta fuera de los rangos. Pertenece a la lista depuración."], 400);
             }

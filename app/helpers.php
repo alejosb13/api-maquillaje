@@ -348,6 +348,8 @@ function queryEstadoCuenta($cliente_id)
 {
     $response = [
         "estado_cuenta" => [],
+        "facturas" => [],
+        "abonos" => [],
     ];
 
     if (is_numeric($cliente_id)) {
@@ -396,12 +398,19 @@ function queryEstadoCuenta($cliente_id)
             $saldo = 0;
             foreach ($estadoCuenta as $operacion) {
                 // if(!isset($operacion->saldo)) $operacion->saldo = 0;
-                $saldo = ($operacion->credito != "") ? number_format((float)$operacion->credito, 2, ".", "") + number_format((float)$saldo, 2, ".", "")   : number_format((float)$saldo, 2, ".", "") - number_format((float)($operacion->abono), 2, ".", "");
+                $saldo = ($operacion->credito != "") ? decimal($operacion->credito) + decimal($saldo)   : decimal($saldo) - decimal($operacion->abono);
 
                 $operacion->saldo = $saldo;
                 // print_r(intval($operacion->credito) + $operacion->saldo ."<br>");
+
+                if ($operacion->credito != "") {
+                    array_push($response["facturas"], $operacion);
+                } else {
+                    array_push($response["abonos"], $operacion);
+                }
+
+                $response["estado_cuenta"] = $estadoCuenta;
             }
-            $response["estado_cuenta"] = $estadoCuenta;
         }
     }
 

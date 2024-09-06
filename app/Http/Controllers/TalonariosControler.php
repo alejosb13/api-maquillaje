@@ -47,7 +47,7 @@ class TalonariosControler extends Controller
             return $q->where('tipo', $request->tipoGasto);
         });
 
-        $Talonarios = $Talonarios->orderBy('min', 'asc');
+        $Talonarios = $Talonarios->orderBy('min', 'desc');
         if ($request->disablePaginate == 0) {
             $Talonarios = $Talonarios->paginate(15);
         } else {

@@ -129,7 +129,8 @@ trait DevolucionesSupervisorTrait
             'facturas.updated_at',
             DB::raw('SUM(devolucion_productos.cantidad * factura_detalles.precio_unidad) AS monto_devueltos'),
             DB::raw(" GROUP_CONCAT(factura_detalles.id SEPARATOR ',') AS ids_agrupados "),
-            DB::raw("'pd' AS origen") // Agrega la columna origen
+            DB::raw("'pd' AS origen"), // Agrega la columna origen
+            DB::raw('MIN(devolucion_productos.created_at) AS devolucion_created_at') 
         ])
             ->join('factura_detalles', 'factura_detalles.factura_id', '=', 'facturas.id')
             ->join('devolucion_productos', 'devolucion_productos.factura_detalle_id', '=', 'factura_detalles.id')
@@ -166,8 +167,8 @@ trait DevolucionesSupervisorTrait
             'facturas.updated_at',
             DB::raw('facturas.monto AS monto_devueltos'),
             DB::raw("GROUP_CONCAT(factura_detalles.id SEPARATOR ',') AS ids_agrupados "),
-            DB::raw("'fd' AS origen") // Agrega la columna origen
-
+            DB::raw("'fd' AS origen"), // Agrega la columna origen
+            DB::raw('MIN(devolucion_facturas.created_at) AS devolucion_created_at')
         ])
             ->join('factura_detalles', 'factura_detalles.factura_id', '=', 'facturas.id')
             ->join('devolucion_facturas', 'devolucion_facturas.factura_id', '=', 'facturas.id')

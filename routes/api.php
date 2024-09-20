@@ -8,6 +8,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\CostosController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\DevolucionFacturaController;
 use App\Http\Controllers\DevolucionProductoController;
 use App\Http\Controllers\DevolucionSupervisorController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\InversionController;
 use App\Http\Controllers\ListadosPaginasController;
 use App\Http\Controllers\LogisticaController;
 use App\Http\Controllers\MetasController;
+use App\Http\Controllers\MunicipioController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\ReciboController;
@@ -32,6 +34,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ScriptController;
 use App\Http\Controllers\TalonariosControler;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\ZonaController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -164,7 +167,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::get('regalos/detalle/{id}', [RegalosController::class, 'regaloXdetalle']);
     Route::get('regalos/factura/{id}', [RegalosController::class, 'regalosXFactura']);
     Route::resource('regalos', RegalosController::class);
-    
+
 
 
     // Route::post('configuracion/migracion', [ConfiguracionController::class, 'migracion']);
@@ -187,21 +190,26 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     Route::post('finanzas/productos-vendidos', [CostosController::class, 'saveCostosVentas']);
     Route::put('finanzas/productos-vendidos/{id}', [CostosController::class, 'updateCostosVentas']);
     Route::delete('finanzas/productos-vendidos/{id}', [CostosController::class, 'deleteCostoVenta']);
-    
-    
+
+
     Route::resource('finanzas/gastos', GastoController::class);
     
     Route::post('talonarios/lote', [TalonariosControler::class, 'talonario']);
     Route::resource('talonarios', TalonariosControler::class);
 
     Route::get('finanzas/productos-vendidos', [CostosController::class, 'getAllProductosVendidos']);
-    Route::get('finanzas/estado-finanzas', [GastoController::class,'EstadoResultado']);
-    
-    Route::post('logistica/clientes-inactivos/notas', [LogisticaController::class,'clienteInactivoNotas']);
-    
+    Route::get('finanzas/estado-finanzas', [GastoController::class, 'EstadoResultado']);
+
+    Route::post('logistica/clientes-inactivos/notas', [LogisticaController::class, 'clienteInactivoNotas']);
+
     Route::resource('supervisor/devolucion', DevolucionSupervisorController::class);
-    Route::get('supervisor/deducciones', [DevolucionSupervisorController::class,'deducciones']);
-    Route::delete('supervisor/deducciones/{id}', [DevolucionSupervisorController::class,'deleteDeducciones']);
+    Route::get('supervisor/deducciones', [DevolucionSupervisorController::class, 'deducciones']);
+    Route::delete('supervisor/deducciones/{id}', [DevolucionSupervisorController::class, 'deleteDeducciones']);
+
+
+    Route::resource('configuracion/zonas', ZonaController::class);
+    Route::resource('configuracion/departamentos', DepartamentoController::class);
+    Route::resource('configuracion/municipios', MunicipioController::class);
 });
 
 
@@ -232,7 +240,7 @@ Route::get('configuracion/crons-list', function () {
 //     Artisan::call('save:indice');
 //     echo Artisan::output();
 // });
-Route::get('configuracion/clear-cache', function () {
+Route::get('configuracion//clear-cache', function () {
     echo Artisan::call('config:clear');
     echo Artisan::call('config:cache');
     echo Artisan::call('cache:clear');

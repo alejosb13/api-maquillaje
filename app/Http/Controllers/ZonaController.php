@@ -127,7 +127,7 @@ class ZonaController extends Controller
         
         $Zona =  Zona::find($id);
 
-        $Talonario = $Zona->update([
+        $Zona->update([
             'nombre' => $request->nombre,
         ]);
 

@@ -3,12 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Departamento;
-use App\Models\DevolucionSupervisorFactura;
-use App\Models\DevolucionSupervisorFacturaProducto;
 use App\Models\Talonario;
-use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
 class DepartamentoController extends Controller
@@ -62,58 +59,26 @@ class DepartamentoController extends Controller
     public function store(Request $request)
     {
         $validation = Validator::make($request->all(), [
-            'factura_id' => 'required|numeric',
-            'monto' => 'required|numeric',
-            'saldo_restante' => 'required|numeric',
-            'origen' => 'required',
-            'monto_devueltos' => 'required',
-            'productos' => 'required',
+            'nombre' => ['required', 'string', Rule::unique('zonas', 'nombre')],
+            'zona' => ['required'],
         ]);
 
         if ($validation->fails()) {
             return response()->json([$validation->errors()], 400);
         }
         // DB::enableQueryLog();
-        DB::beginTransaction();
-        try {
 
+        $Talonario = Departamento::create([
+            'nombre' => $request->nombre,
+            'zona_id' => $request->zona,
+        ]);
 
-
-            $DevolucionSupervisorFactura = DevolucionSupervisorFactura::create([
-                'factura_id' => $request->factura_id,
-                'monto' => $request->monto,
-                'saldo_restante' => $request->saldo_restante,
-                'origen' => $request->origen,
-                'monto_devueltos' => $request->monto_devueltos,
-                'estado' => 1,
-            ]);
-            $productos = $request->productos;
-
-            // print_r($DevolucionSupervisorFactura->id);
-            foreach ($productos as $key => $producto) {
-                $DevolucionSupervisorFacturaProducto = DevolucionSupervisorFacturaProducto::create([
-                    'devolucion_supervisor_factura_id' => $DevolucionSupervisorFactura->id,
-                    'factura_detalle_id' => $producto["id"],
-                    'cantidad' => $producto["cantidad"],
-                    'monto' => $producto["precio"],
-                    'monto_unidad' => $producto["precio_unidad"],
-                    'estado' => 1,
-                ]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'mensaje' => 'deducción de Supervisor creada con éxito',
-                'data' => [
-                    'id' => $DevolucionSupervisorFactura->id,
-                ]
-            ], 201);
-        } catch (Exception $e) {
-            DB::rollback();
-            // print_r(json_encode($e));
-            return response()->json(["mensaje" => json_encode($e->getMessage())], 400);
-        }
+        return response()->json([
+            'mensaje' => 'Departamento creado con éxito',
+            'data' => [
+                'id' => $Talonario->id,
+            ]
+        ], 201);
     }
 
     /**
@@ -168,46 +133,28 @@ class DepartamentoController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $response = [];
-        $status = 400;
-
-        if (!is_numeric($id)) {
-            $response = ["mensaje" => "El Valor de Id debe ser numérico."];
-            return response()->json($response, $status);
-        }
-
-        $Talonario =  Talonario::find($id);
-
-        if (!$Talonario) {
-            $response = ["mensaje" => "El talonario no existe o fue eliminado."];
-            return response()->json($response, $status);
-        }
-
         $validation = Validator::make($request->all(), [
-            'min' => 'required|numeric',
-            'max' => 'required|numeric',
-            'user_id' => 'nullable|numeric',
+            // 'nombre' => 'required',
+            'nombre' => ['required', 'string', Rule::unique('zonas', 'nombre')->ignore($id)],
+            'zona' => ['required'],
         ]);
 
         if ($validation->fails()) {
             return response()->json([$validation->errors()], 400);
         }
+        // DB::enableQueryLog();
 
-        $talonarioUpdate = $Talonario->update([
-            'min' => $request['min'],
-            'max' => $request['max'],
-            'user_id' => $request['user_id'],
+        
+        $Zona =  Departamento::find($id);
+
+        $Zona->update([
+            'nombre' => $request->nombre,
+            'zona_id' => $request->zona,
         ]);
 
-
-        if ($talonarioUpdate) {
-            $response = ["mensaje" => "Talonario modificado con éxito."];
-            $status = 200;
-        } else {
-            $response = ["mensaje" => 'Error al modificar los datos.'];
-        }
-
-        return response()->json($response, $status);
+        return response()->json([
+            'mensaje' => 'Deparamento editado con éxito',
+        ], 200);
     }
 
     /**
@@ -226,22 +173,20 @@ class DepartamentoController extends Controller
             return response()->json($response, $status);
         }
 
-        $Talonario =  Talonario::find($id);
+        $Zona =  Departamento::find($id);
 
-        if (!$Talonario) {
-            $response = ["mensaje" => "El talonario no existe o fue eliminado."];
+        if (!$Zona) {
+            $response = ["mensaje" => "El departamento no existe o fue eliminado."];
             return response()->json($response, $status);
         }
 
-        $TalonarioDelete = $Talonario->update([
-            'estado' => 0,
-        ]);
+        $ZonaDelete = $Zona->delete();
 
-        if ($TalonarioDelete) {
-            $response = ["mensaje" => "El talonario fue eliminado con éxito."];
+        if ($ZonaDelete) {
+            $response = ["mensaje" => "El departamento fue eliminada con éxito."];
             $status = 200;
         } else {
-            $response["mensaje"] = 'Error al eliminar el talonario.';
+            $response["mensaje"] = 'Error al eliminar el departamento.';
         }
 
         return response()->json($response, $status);

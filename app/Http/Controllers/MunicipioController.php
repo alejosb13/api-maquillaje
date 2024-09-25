@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Municipio;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class MunicipioController extends Controller
 {
@@ -53,7 +55,27 @@ class MunicipioController extends Controller
      */
     public function store(Request $request)
     {
-        
+        $validation = Validator::make($request->all(), [
+            'nombre' => ['required', 'string', Rule::unique('zonas', 'nombre')],
+            'departamento' => ['required'],
+        ]);
+
+        if ($validation->fails()) {
+            return response()->json([$validation->errors()], 400);
+        }
+        // DB::enableQueryLog();
+
+        $Talonario = Municipio::create([
+            'nombre' => $request->nombre,
+            'departamento_id' => $request->departamento,
+        ]);
+
+        return response()->json([
+            'mensaje' => 'Municipio creada con éxito',
+            'data' => [
+                'id' => $Talonario->id,
+            ]
+        ], 201);
     }
 
     /**
@@ -87,7 +109,28 @@ class MunicipioController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validation = Validator::make($request->all(), [
+            // 'nombre' => 'required',
+            'nombre' => ['required', 'string', Rule::unique('zonas', 'nombre')->ignore($id)],
+            'departamento' => ['required'],
+        ]);
+
+        if ($validation->fails()) {
+            return response()->json([$validation->errors()], 400);
+        }
+        // DB::enableQueryLog();
+
+        
+        $Zona =  Municipio::find($id);
+
+        $Zona->update([
+            'nombre' => $request->nombre,
+            'departamento_id' => $request->departamento,
+        ]);
+
+        return response()->json([
+            'mensaje' => 'Municipio editada con éxito',
+        ], 200);
     }
 
     /**
@@ -98,6 +141,30 @@ class MunicipioController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $response = [];
+        $status = 400;
+
+        if (!is_numeric($id)) {
+            $response["mensaje"] = "El Valor de Id debe ser numérico.";
+            return response()->json($response, $status);
+        }
+
+        $Zona =  Municipio::find($id);
+
+        if (!$Zona) {
+            $response = ["mensaje" => "El municipio no existe o fue eliminado."];
+            return response()->json($response, $status);
+        }
+
+        $ZonaDelete = $Zona->delete();
+
+        if ($ZonaDelete) {
+            $response = ["mensaje" => "El municipio fue eliminado con éxito."];
+            $status = 200;
+        } else {
+            $response["mensaje"] = 'Error al eliminar el municipio.';
+        }
+
+        return response()->json($response, $status);
     }
 }

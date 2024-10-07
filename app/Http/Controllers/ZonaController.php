@@ -30,7 +30,7 @@ class ZonaController extends Controller
             return $q->where('estado', $request->estado);
         });
 
-        $ZonaQuery = $ZonaQuery->orderBy('created_at', 'desc')->with(["departamentos", "departamentos.municipios"]);
+        $ZonaQuery = $ZonaQuery->orderBy('id', 'asc')->with(["departamentos", "departamentos.municipios"]);
 
         if ($request->disablePaginate == 0) {
             $ZonaQuery = $ZonaQuery->paginate(15);

@@ -586,15 +586,19 @@ class PdfController extends Controller
         $resultCostosProductosVendidos = ListadoCostosProductosVendidos($dataRequest);
         $costo_listado[] = $resultCostosProductosVendidos["totalProductos"];
 
-        foreach ($resultCostosProductosVendidos["totalProductos"] as $costo) {
-            if ($costo->inversion) {
-                $costo_total += $costo->inversion->costo * $costo->cantidad;
-            } else {
-                if ($costo->costo_opcional) {
-                    $costo_total += $costo->costo_opcional->costo * $costo->cantidad;
-                }
-            }
-        }
+        // $response["costo_listado"][] = $resultCostosProductosVendidos["productos"];
+        $costo_total = $resultCostosProductosVendidos["costoTotal"];
+
+        // dd(json_encode($resultCostosProductosVendidos["totalProductos"]));
+        // foreach ($resultCostosProductosVendidos["productos"] as $costo) {
+        //     if ($costo->inversion) {
+        //         $costo_total += ($costo->inversion->costo * $costo->cantidad);
+        //     } else {
+        //         if ($costo->costo_opcional) {
+        //             $costo_total += ($costo->costo_opcional->costo * $costo->cantidad);
+        //         }
+        //     }
+        // }
 
         $responseGastos = ListadoGastos($dataRequest);
         $response["gasto_general_total"] = $responseGastos["total_monto"];
@@ -613,20 +617,22 @@ class PdfController extends Controller
             $ventas_listado[] = $listadoVentasUser;
         }
 
+
         $incentivosSupervisor = incentivoSupervisorQuery($dataRequest);
         $incentivos_supervisor_total = decimal($incentivosSupervisor["totalFacturaVendedores2Porciento"] + $incentivosSupervisor["totalRecuperacionVendedores"]);
         $incentivos_vendedor_total  = decimal($incentivos_vendedor_total  * 0.20);
         $incentivos_total  = decimal($incentivos_vendedor_total  + $incentivos_supervisor_total);
 
-        $gasto_total  = decimal($incentivos_total + $gasto_general_total);
-        $gasto_total_porcentaje  =  $ventas_total ? decimal($gasto_total / $ventas_total) : 0;
 
-        $costo_total_porcentaje  = $ventas_total ? decimal($costo_total / $ventas_total) : 0;
+        $gasto_total  = decimal($incentivos_total + $response["gasto_general_total"]);
+        $gasto_total_porcentaje  =  $ventas_total ? decimal($gasto_total / $ventas_total * 100) : 0;
+
+        $costo_total_porcentaje  = $ventas_total ? decimal($costo_total / $ventas_total * 100) : 0;
 
         $utilidad_bruta_total = decimal($ventas_total - $costo_total);
         $utilidad_neta_total = decimal($utilidad_bruta_total - $gasto_total);
-        $utilidad_neta_total_porcentaje  = $ventas_total ? decimal($utilidad_neta_total / $ventas_total) : 0;
-
+        $utilidad_neta_total_porcentaje  = $ventas_total ? decimal($utilidad_neta_total / $ventas_total * 100) : 0;
+        // dd($utilidad_bruta_total);
         $archivo = PDF::loadView('estado_finanza', compact(
             'ventas_listado',
             'ventas_totalMetas',

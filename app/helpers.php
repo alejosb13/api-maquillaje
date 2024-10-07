@@ -997,10 +997,15 @@ function incentivosQuery($request)
         'total_contado' => 0,
         'total_credito' => 0,
         'porcentaje20' => 0,
+        'porcentaje_asignado' => 0.20,
         'total' => 0,
     ];
 
     $userId = $request->userId;
+    $fechaLimite = Carbon::create(2024, 9, 23, 0, 0, 0); // ($userId == 28 || $userId == 34)
+    $fechaActual = Carbon::now();
+    // $porcentaje = 0.20;
+
     if (empty($request->dateIni)) {
         $dateIni = Carbon::now();
     } else {
@@ -1063,6 +1068,25 @@ function incentivosQuery($request)
 
                 if ($recibo_historial->factura_historial) {
                     $response["total_contado"] += $recibo_historial->factura_historial->precio;
+
+                    if ($fechaActual->greaterThanOrEqualTo($fechaLimite) && ($userId == 28 || $userId == 34)) {
+                        // $porcentaje = 0.22;
+                        $response["porcentaje_asignado"] = 0.22;
+                    } 
+
+                    $response["porcentaje20"] += decimal($recibo_historial->factura_historial->precio * $response["porcentaje_asignado"]);
+
+                    // if ($fechaActual->greaterThanOrEqualTo($fechaLimite)) {
+                    //     // Si la fecha actual es mayor o igual a la fecha límite
+                    //     if ($userId == 28 || $userId == 34) {
+                    //         $response["porcentaje20"] += decimal($recibo_historial->factura_historial->precio * 0.22);
+                    //     } else {
+                    //         $response["porcentaje20"] += decimal($recibo_historial->factura_historial->precio * 0.20);
+                    //     }
+                    // } else {
+                    //     $response["porcentaje20"] += decimal($recibo_historial->factura_historial->precio * 0.20);
+                    // }
+
                 }
             }
         }
@@ -1103,6 +1127,18 @@ function incentivosQuery($request)
 
                 if ($recibo_historial_contado->factura) {
                     $response["total_credito"] += $recibo_historial_contado->factura->monto;
+                    if ($fechaActual->greaterThanOrEqualTo($fechaLimite) && ($userId == 28 || $userId == 34)) {
+                        // $porcentaje = 0.22;
+                        $response["porcentaje_asignado"] = 0.22;
+                    }
+
+                    $response["porcentaje20"] += decimal($recibo_historial_contado->factura->monto * $response["porcentaje_asignado"]);
+
+                    // if ($userId == 28 || $userId == 34) {
+                    //     $response["porcentaje20"] += decimal($recibo_historial_contado->factura->monto * 0.22);
+                    // } else {
+                    //     $response["porcentaje20"] += decimal($recibo_historial_contado->factura->monto * 0.20);
+                    // }
                 }
             }
         }
@@ -1112,7 +1148,7 @@ function incentivosQuery($request)
         $response["total_credito"] = number_format($response["total_credito"], 2, ".", "");
         $response["total_contado"] = number_format($response["total_contado"], 2, ".", "");
         $response["total"]         = number_format($response["total_contado"] + $response["total_credito"], 2, ".", "");
-        $response["porcentaje20"]  = number_format($response["total"] * 0.20, 2, ".", "");
+        // $response["porcentaje20"]  = number_format($response["total"] * 0.20, 2, ".", "");
 
         $response["recibo"]        = $recibo;
     }
@@ -2213,7 +2249,7 @@ function ListadoCostosProductosVendidos($request)
         );
         // print_r([$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
     }
-
+    // dd($request);
     $facturas = $facturasStorage->get();
 
     foreach ($facturas as $factura) {
@@ -2313,7 +2349,7 @@ function ListadoCostosProductosVendidos($request)
     $response["productos"] = $productoVendidos;
     $response["totalProductos"] = $contadorProductos;
     // }
-
+    // dd(json_encode($response));
     // $response = $facturas;
     // $response["id"] = $idProductos;
     return $response;

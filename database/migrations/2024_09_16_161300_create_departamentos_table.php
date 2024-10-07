@@ -15,7 +15,7 @@ class CreateDepartamentosTable extends Migration
     {
         Schema::create('departamentos', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre')->unique();
+            $table->string('nombre');
             $table->foreignId('zona_id')->nullable()->constrained('zonas')->onDelete('set null');
             $table->integer("estado")->length(1)->default(1);
             $table->timestamps();

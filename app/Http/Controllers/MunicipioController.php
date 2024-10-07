@@ -24,7 +24,7 @@ class MunicipioController extends Controller
         $MunicipioQuery =  Municipio::query();
 
         // $facturas =  Factura::query();
-        $MunicipioQuery = $MunicipioQuery->orderBy('created_at', 'desc')->with(["departamento", "departamento.zona"]);
+        $MunicipioQuery = $MunicipioQuery->orderBy('id', 'asc')->with(["departamento", "departamento.zona"]);
 
         if ($request->disablePaginate == 0) {
             $MunicipioQuery = $MunicipioQuery->paginate(15);

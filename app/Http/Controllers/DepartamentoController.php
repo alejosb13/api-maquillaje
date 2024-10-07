@@ -26,7 +26,7 @@ class DepartamentoController extends Controller
         $DepartamentoQuery =  Departamento::query();
 
         // $facturas =  Factura::query();
-        $DepartamentoQuery = $DepartamentoQuery->orderBy('created_at', 'desc')->with(["zona", "municipios"]);
+        $DepartamentoQuery = $DepartamentoQuery->orderBy('id', 'asc')->with(["zona", "municipios"]);
 
         if ($request->disablePaginate == 0) {
             $DepartamentoQuery = $DepartamentoQuery->paginate(15);

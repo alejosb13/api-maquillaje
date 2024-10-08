@@ -23,6 +23,9 @@ class Cliente extends Model
         'dias_cobro',
         // 'fecha_vencimiento',
         'estado',
+        'zona_id',
+        'departamento_id',
+        'municipio_id',
     ];
 
     // one to many

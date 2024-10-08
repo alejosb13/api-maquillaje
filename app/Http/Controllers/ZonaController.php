@@ -30,6 +30,10 @@ class ZonaController extends Controller
             return $q->where('estado', $request->estado);
         });
 
+        $ZonaQuery->when(isset($request->departamento_id), function ($q) use ($request) {
+            return $q->where('departamento_id', $request->departamento_id);
+        });
+
         $ZonaQuery = $ZonaQuery->orderBy('id', 'asc')->with(["departamentos", "departamentos.municipios"]);
 
         if ($request->disablePaginate == 0) {
@@ -124,7 +128,7 @@ class ZonaController extends Controller
         }
         // DB::enableQueryLog();
 
-        
+
         $Zona =  Zona::find($id);
 
         $Zona->update([

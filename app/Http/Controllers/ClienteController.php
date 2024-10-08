@@ -85,6 +85,9 @@ class ClienteController extends Controller
             'dias_cobro' => 'string|max:120',
             // 'fecha_vencimiento' => 'required|date',
             'estado' => 'required|numeric|max:1',
+            'zona_id' => 'required',
+            'departamento_id' => 'required',
+            'municipio_id' => 'required',
 
         ]);
 
@@ -107,6 +110,9 @@ class ClienteController extends Controller
                 'user_id' => ($request['user_id'] > 0) ? $request['user_id'] : NULL,
                 // 'fecha_vencimiento' => $request['fecha_vencimiento'],
                 'estado' => $request['estado'],
+                'zona_id' => $request['zona_id'],
+                'departamento_id' => $request['departamento_id'],
+                'municipio_id' => $request['municipio_id'],
             ]);
             // $query = DB::getQueryLog();
             // dd($query);
@@ -226,6 +232,9 @@ class ClienteController extends Controller
                     'dias_cobro' => 'string|max:120',
                     // 'fecha_vencimiento' => 'required|date',
                     'estado' => 'required|numeric|max:1',
+                    'zona_id' => 'required',
+                    'departamento_id' => 'required',
+                    'municipio_id' => 'required',
                 ]);
 
                 if ($validation->fails()) {
@@ -247,6 +256,9 @@ class ClienteController extends Controller
                         'user_id' => ($request['user_id'] > 0) ? $request['user_id'] : NULL,
                         // 'fecha_vencimiento' => $request['fecha_vencimiento'],
                         'estado' => $request['estado'],
+                        'zona_id' => $request['zona_id'],
+                        'departamento_id' => $request['departamento_id'],
+                        'municipio_id' => $request['municipio_id'],
                     ]);
 
 

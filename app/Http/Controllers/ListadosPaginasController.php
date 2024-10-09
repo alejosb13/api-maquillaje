@@ -4,14 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Categoria;
 use App\Models\Cliente;
+use App\Models\Departamento;
 use App\Models\Factura;
 use App\Models\Factura_Detalle;
 use App\Models\FacturaHistorial;
 use App\Models\MetaHistorial;
+use App\Models\Municipio;
 use App\Models\Producto;
 use App\Models\Recibo;
 use App\Models\ReciboHistorial;
 use App\Models\User;
+use App\Models\Zona;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -526,7 +529,7 @@ class ListadosPaginasController extends Controller
             $dateFin = Carbon::parse($request->dateFin);
         }
 
-        // DB::enableQueryLog();
+        DB::enableQueryLog();
 
         $clientes =  Cliente::query();
 
@@ -585,6 +588,21 @@ class ListadosPaginasController extends Controller
             return $query->where('categoria_id', $categoria->id);
         });
 
+        $clientes->when(isset($request->zona_id) && $request->zona_id != 0, function ($q) use ($request) {
+            $query = $q;
+            return $query->where('zona_id', $request->zona_id);
+        });
+
+        $clientes->when(isset($request->departamento_id) && $request->departamento_id != 0, function ($q) use ($request) {
+            $query = $q;
+            return $query->where('departamento_id', $request->departamento_id);
+        });
+
+        $clientes->when(isset($request->municipio_id) && $request->municipio_id != 0, function ($q) use ($request) {
+            $query = $q;
+            return $query->where('municipio_id', $request->municipio_id);
+        });
+
         // ** Filtrado por rango de fechas 
         // $clientes->when($request->allDates && $request->allDates == "false", function ($q) use ($dateIni, $dateFin) {
         //     return $q->whereBetween('created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]);
@@ -606,10 +624,50 @@ class ListadosPaginasController extends Controller
         $clientes->when($request->filter && !is_numeric($request->filter), function ($q) use ($request) {
             $query = $q;
 
-            // nombre cliente y empresa
-            // $query = $query->where('nombreCompleto', 'LIKE', '%' . $request->filter . '%',"or")
-            //     ->where('nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or")
-            //     ->where('direccion_casa', 'LIKE', '%' . $request->filter . '%',"or");
+            $ZonasId = [];
+            $Zonas = Zona::select('id')
+                ->where('nombre', 'LIKE', '%' . $request['filter'] . '%')
+                ->get();
+
+            if (count($Zonas) > 0) {
+                foreach ($Zonas as $Zona) {
+                    $ZonasId[] = $Zona->id;
+                }
+            }
+            // if (count($ZonasId) > 0) {
+            //     // $query = $q->orWhereIn('zona_id', $ZonasId);
+            // }
+
+            $DepartamentosId = [];
+            $Departamentos = Departamento::select('id')
+                ->where('nombre', 'LIKE', '%' . $request['filter'] . '%')
+                ->get();
+
+            if (count($Departamentos) > 0) {
+                foreach ($Departamentos as $Departamento) {
+                    $DepartamentosId[] = $Departamento->id;
+                }
+            }
+            // if (count($DepartamentosId) > 0) {
+            //     // $query = $q->WhereIn('departamento_id', $DepartamentosId);
+            // }
+
+            $municipiosId = [];
+            $Municipios = Municipio::select('id')
+                ->where('nombre', 'LIKE', '%' . $request['filter'] . '%')
+                ->get();
+
+            if (count($Municipios) > 0) {
+                foreach ($Municipios as $Municipio) {
+                    $municipiosId[] = $Municipio->id;
+                }
+            }
+            // if (count($municipiosId) > 0) {
+            //     // $query = $q->WhereIn('municipio_id', $municipiosId);
+            // }
+            
+
+
             $query = $query->where(
                 [
                     ['nombreCompleto', 'LIKE', '%' . $request->filter . '%', "or"],
@@ -620,6 +678,19 @@ class ListadosPaginasController extends Controller
             //     ->where('nombreEmpresa', 'LIKE', '%' . $request->filter . '%',"or")
             //     ->where('direccion_casa', 'LIKE', '%' . $request->filter . '%',"or");
 
+            $query = $query->orWhere(function($q) use ($DepartamentosId, $municipiosId, $ZonasId) {
+                if (!empty($DepartamentosId)) {
+                    $q->whereIn('departamento_id', $DepartamentosId);
+                }
+            
+                if (!empty($municipiosId)) {
+                    $q->whereIn('municipio_id', $municipiosId);
+                }
+            
+                if (!empty($ZonasId)) {
+                    $q->orWhereIn('zona_id', $ZonasId);
+                }
+            });
 
             return $query;
         }); // Fin Filtrado por cliente

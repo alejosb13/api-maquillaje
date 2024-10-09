@@ -31,6 +31,7 @@ class User extends Authenticatable
         'fecha_nacimiento',
         'fecha_ingreso',
         'estado',
+        'zona_id',
     ];
 
     /**

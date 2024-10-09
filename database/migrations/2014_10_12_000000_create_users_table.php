@@ -30,6 +30,7 @@ class CreateUsersTable extends Migration
             // $table->string("direccion_negocio",180)->nullable();
             $table->timestamp('fecha_nacimiento')->nullable();
             $table->timestamp('fecha_ingreso')->nullable();
+            $table->foreignId('zona_id')->nullable()->constrained('zonas')->onDelete('set null');
         });
     }
 

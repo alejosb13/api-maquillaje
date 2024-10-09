@@ -28,14 +28,15 @@ class UsuarioController extends Controller
         $usuarios =  User::all();
 
         // $cliente =  Cliente::find($id);
-        if(count($usuarios) > 0){
+        if (count($usuarios) > 0) {
             foreach ($usuarios as $usuario) {
                 $usuario->factura;
-                if($usuario->recibo != null ){
-                    $usuario->ultimo_recibo = ReciboHistorial::where([
-                        ["recibo_id", $usuario->recibo->id],
-                        // ["estado", 1],
-                    ]
+                if ($usuario->recibo != null) {
+                    $usuario->ultimo_recibo = ReciboHistorial::where(
+                        [
+                            ["recibo_id", $usuario->recibo->id],
+                            // ["estado", 1],
+                        ]
                     )->orderBy('created_at', 'desc')->first();
                 }
                 $usuario->meta;
@@ -49,8 +50,7 @@ class UsuarioController extends Controller
 
             $response = $usuarios;
             $status = 200;
-
-        }else{
+        } else {
             $response[] = "El usuario no existe o fue eliminado.";
         }
 
@@ -62,8 +62,7 @@ class UsuarioController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
-    {}
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
@@ -76,7 +75,7 @@ class UsuarioController extends Controller
         $response = [];
         $status = 400;
 
-        $validation = Validator::make($request->all() ,[
+        $validation = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'password' => 'required|string|confirmed',
             'email' => 'required|string|email|unique:users,email',
@@ -89,11 +88,12 @@ class UsuarioController extends Controller
             'domicilio' => 'required|string|max:180',
             'fecha_nacimiento' => 'required|date',
             'fecha_ingreso' => 'required|date',
+            'zona_id' => 'required|numeric',
         ]);
 
-        if($validation->fails()) {
+        if ($validation->fails()) {
             $response[] = $validation->errors();
-        }else {
+        } else {
             $user = User::create([
                 'name' => $request['name'],
                 'password' => bcrypt($request['password']),
@@ -106,6 +106,7 @@ class UsuarioController extends Controller
                 'domicilio' => $request['domicilio'],
                 'fecha_nacimiento' => $request['fecha_nacimiento'],
                 'fecha_ingreso' => $request['fecha_ingreso'],
+                'zona_id' => $request['zona_id'],
             ]);
             $role = Role::find($request['role']);
             // dd($user);
@@ -134,14 +135,14 @@ class UsuarioController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id,Request $request)
+    public function show($id, Request $request)
     {
         $response = [];
         $status = 400;
         // $clienteEstado = 1; // Activo
         // User::whereHas("roles", function($q){ $q->where("name", "admin"); })->get()
 
-        if(is_numeric($id)){
+        if (is_numeric($id)) {
 
             // if($request->input("estado") !== null) $clienteEstado = $request->input("estado");
 
@@ -154,7 +155,7 @@ class UsuarioController extends Controller
 
 
             // $cliente =  Cliente::find($id);
-            if($usuario){
+            if ($usuario) {
                 $role_id = DB::table('model_has_roles')->where('model_id', $usuario->id)->first();
 
                 $usuario->clientes;
@@ -165,12 +166,10 @@ class UsuarioController extends Controller
 
                 $response = $usuario;
                 $status = 200;
-
-            }else{
+            } else {
                 $response[] = "El usuario no existe o fue eliminado.";
             }
-
-        }else{
+        } else {
             $response[] = "El usuario de Id debe ser numerico.";
         }
 
@@ -194,26 +193,27 @@ class UsuarioController extends Controller
         $response = [];
         $status = 400;
 
-        if(is_numeric($id)){
+        if (is_numeric($id)) {
             $usuario =  User::find($id);
 
-            if($usuario){
-                $validation = Validator::make($request->all() ,[
+            if ($usuario) {
+                $validation = Validator::make($request->all(), [
                     'name' => 'required|string|max:255',
                     // 'password' => 'required|string|min:6|confirmed',
-                    'email' => 'required|string|email|unique:users,email,'.$id,
+                    'email' => 'required|string|email|unique:users,email,' . $id,
                     'apellido' => 'required|string|max:255',
                     'cargo' => 'required|string|max:255',
                     'estado' => 'required|numeric|max:1',
                     'role' => 'required|numeric',
                     'cedula' => 'required',
-                    'celular' => 'required|numeric|unique:users,celular,'.$id,
+                    'celular' => 'required|numeric|unique:users,celular,' . $id,
                     'domicilio' => 'required|string|max:180',
                     'fecha_nacimiento' => 'required|date',
                     'fecha_ingreso' => 'required|date',
+                    'zona_id' => 'required|numeric',
                 ]);
 
-                if($validation->fails()) {
+                if ($validation->fails()) {
                     $response[] = $validation->errors();
                 } else {
 
@@ -230,6 +230,7 @@ class UsuarioController extends Controller
                         'domicilio' => $request['domicilio'],
                         'fecha_nacimiento' => $request['fecha_nacimiento'],
                         'fecha_ingreso' => $request['fecha_ingreso'],
+                        'zona_id' => $request['zona_id'],
                     ]);
 
                     DB::table('model_has_roles')->where('model_id', $usuario->id)->delete();
@@ -237,22 +238,18 @@ class UsuarioController extends Controller
 
                     $usuario->assignRole($role->name);
 
-                    if($usuarioUpdate){
+                    if ($usuarioUpdate) {
                         $response[] = 'Usuario modificado con exito.';
                         $status = 200;
-
-                    }else{
+                    } else {
                         $response[] = 'Error al modificar los datos.';
                     }
-
                 }
-
-            }else{
+            } else {
                 $response[] = "El Usuario no existe.";
             }
-
-        }else{
-            $response[] = "El Valor de Id debe ser numerico.";
+        } else {
+            $response[] = "El Valor de Id debe ser numérico.";
         }
 
         return response()->json($response, $status);
@@ -265,20 +262,20 @@ class UsuarioController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function updatePassword( $id,Request $request)
+    public function updatePassword($id, Request $request)
     {
         $response = [];
         $status = 400;
 
-        if(is_numeric($id)){
+        if (is_numeric($id)) {
             $usuario =  User::find($id);
             // dd($usuario);
-            if($usuario){
-                $validation = Validator::make($request->all() ,[
+            if ($usuario) {
+                $validation = Validator::make($request->all(), [
                     'password' => 'required|string|confirmed',
                 ]);
 
-                if($validation->fails()) {
+                if ($validation->fails()) {
                     $response[] = $validation->errors();
                 } else {
 
@@ -286,21 +283,17 @@ class UsuarioController extends Controller
                         'password' => bcrypt($request['password']),
                     ]);
 
-                    if($usuarioUpdate){
+                    if ($usuarioUpdate) {
                         $response[] = 'Clave modificada con exito';
                         $status = 200;
-
-                    }else{
+                    } else {
                         $response[] = 'Error al modificar la clave';
                     }
-
                 }
-
-            }else{
+            } else {
                 $response[] = "El Usuario no existe.";
             }
-
-        }else{
+        } else {
             $response[] = "El Valor de Id debe ser numerico.";
         }
 
@@ -318,27 +311,24 @@ class UsuarioController extends Controller
         $response = [];
         $status = 400;
 
-        if(is_numeric($id)){
+        if (is_numeric($id)) {
             $cliente =  User::find($id);
 
-            if($cliente){
+            if ($cliente) {
                 $clienteDelete = $cliente->update([
                     'estado' => 0,
                 ]);
 
-                if($clienteDelete){
+                if ($clienteDelete) {
                     $response[] = 'El usuario fue eliminado con exito.';
                     $status = 200;
-
-                }else{
+                } else {
                     $response[] = 'Error al eliminar el usuario.';
                 }
-
-            }else{
+            } else {
                 $response[] = "El usuario no existe.";
             }
-
-        }else{
+        } else {
             $response[] = "El Valor de Id debe ser numerico.";
         }
 

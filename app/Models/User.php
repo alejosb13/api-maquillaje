@@ -30,8 +30,7 @@ class User extends Authenticatable
         'direccion_negocio',
         'fecha_nacimiento',
         'fecha_ingreso',
-        'estado',
-        'zona_id',
+        'estado'
     ];
 
     /**
@@ -53,16 +52,18 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function authorizeRoles($roles){
+    public function authorizeRoles($roles)
+    {
         // abort_unless($this->hasAnyRole($roles), 401);
-        if($this->hasAnyRole($roles)){
+        if ($this->hasAnyRole($roles)) {
             return true;
         }
 
         return false;
     }
 
-    public function hasAnyRole($roles){
+    public function hasAnyRole($roles)
+    {
         if (is_array($roles)) {
             foreach ($roles as $role) {
                 if ($this->hasRole($role)) {
@@ -71,13 +72,14 @@ class User extends Authenticatable
             }
         } else {
             if ($this->hasRole($roles)) {
-                 return true;
+                return true;
             }
         }
         return false;
     }
 
-    public function hasRole($role){
+    public function hasRole($role)
+    {
         if ($this->roles()->where('name', $role)->first()) {
             return true;
         }
@@ -112,5 +114,10 @@ class User extends Authenticatable
     public function meta()
     {
         return $this->hasOne(Meta::class);
+    }
+
+    public function zonas()
+    {
+        return $this->belongsToMany(Zona::class, 'user_zona');
     }
 }

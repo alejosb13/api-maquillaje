@@ -88,7 +88,7 @@ class UsuarioController extends Controller
             'domicilio' => 'required|string|max:180',
             'fecha_nacimiento' => 'required|date',
             'fecha_ingreso' => 'required|date',
-            'zona_id' => 'required|numeric',
+            'zona_id' => 'required',
         ]);
 
         if ($validation->fails()) {
@@ -106,7 +106,6 @@ class UsuarioController extends Controller
                 'domicilio' => $request['domicilio'],
                 'fecha_nacimiento' => $request['fecha_nacimiento'],
                 'fecha_ingreso' => $request['fecha_ingreso'],
-                'zona_id' => $request['zona_id'],
             ]);
             $role = Role::find($request['role']);
             // dd($user);
@@ -114,6 +113,10 @@ class UsuarioController extends Controller
             $status = 201;
             $user->createToken('tokens')->plainTextToken;
             // $response[] = ['token' => $user->createToken('tokens')->plainTextToken];
+
+            // Asociar zonas al usuario
+            // $user->zonas()->attach($request['zona_ids']);
+            $user->zonas()->sync($request['zona_id']);
 
             return response()->json([
                 'id' => $user->id,
@@ -150,7 +153,7 @@ class UsuarioController extends Controller
             $usuario =  User::where([
                 ['id', '=', $id],
                 // ['estado', '=', $clienteEstado],
-            ])->first();
+            ])->with(['zonas'])->first();
 
 
 
@@ -210,7 +213,7 @@ class UsuarioController extends Controller
                     'domicilio' => 'required|string|max:180',
                     'fecha_nacimiento' => 'required|date',
                     'fecha_ingreso' => 'required|date',
-                    'zona_id' => 'required|numeric',
+                    'zona_id' => 'required',
                 ]);
 
                 if ($validation->fails()) {
@@ -237,6 +240,8 @@ class UsuarioController extends Controller
                     $role = Role::find($request['role']);
 
                     $usuario->assignRole($role->name);
+
+                    $usuario->zonas()->sync($request['zona_id']);
 
                     if ($usuarioUpdate) {
                         $response[] = 'Usuario modificado con exito.';

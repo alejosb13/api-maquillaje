@@ -26,7 +26,7 @@ class UsuarioController extends Controller
 
         // dd($clienteEstado);
         $usuarios =  User::all();
-
+        
         // $cliente =  Cliente::find($id);
         if (count($usuarios) > 0) {
             foreach ($usuarios as $usuario) {
@@ -40,6 +40,7 @@ class UsuarioController extends Controller
                     )->orderBy('created_at', 'desc')->first();
                 }
                 $usuario->meta;
+                $usuario->zonas;
                 $usuario->recibosRangosSinTerminar = $usuario->RecibosRangosSinTerminar()->where([
                     ["estado", 1],
                 ])->get();
@@ -122,9 +123,6 @@ class UsuarioController extends Controller
                 'id' => $user->id,
             ], 201);
         }
-
-
-
 
         return response()->json($response, $status);
         // return $this->success([

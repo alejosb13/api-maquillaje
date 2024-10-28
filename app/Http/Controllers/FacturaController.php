@@ -164,7 +164,7 @@ class FacturaController extends Controller
             //     // verifico si el cliente esta en lista negra
 
             // }
-
+            // dd(json_encode($cliente));
             if (!preg_match('/^\d{13}[A-Z]$/', $cliente->cedula)) {
                 return response()->json([
                     "mensaje" => 'El cliente <a href="./cliente/editar/' . $cliente->id . '" target="_blank">' . $cliente->nombreCompleto . '</a> debe actualizar su cédula por una valida para poder avanzar.',
@@ -182,6 +182,27 @@ class FacturaController extends Controller
             if (!preg_match('/^\d{8}$/', $cliente->telefono)) {
                 return response()->json([
                     "mensaje" => 'El cliente <a href="./cliente/editar/' . $cliente->id . '" target="_blank">' . $cliente->nombreCompleto . '</a> debe actualizar el teléfono del salón por una valida para poder avanzar.',
+                    "cliente" => $cliente
+                ], 400);
+            }
+
+            if (!$cliente->zona_id) {
+                return response()->json([
+                    "mensaje" => 'El cliente <a href="./cliente/editar/' . $cliente->id . '" target="_blank">' . $cliente->nombreCompleto . '</a> debe actualizar la zona a la cual pertenece para poder avanzar.',
+                    "cliente" => $cliente
+                ], 400);
+            }
+
+            if (!$cliente->departamento_id) {
+                return response()->json([
+                    "mensaje" => 'El cliente <a href="./cliente/editar/' . $cliente->id . '" target="_blank">' . $cliente->nombreCompleto . '</a> debe actualizar el departamento al cual pertenece para poder avanzar.',
+                    "cliente" => $cliente
+                ], 400);
+            }
+            
+            if (!$cliente->municipio_id) {
+                return response()->json([
+                    "mensaje" => 'El cliente <a href="./cliente/editar/' . $cliente->id . '" target="_blank">' . $cliente->nombreCompleto . '</a> debe actualizar el municipio al cual pertenece para poder avanzar.',
                     "cliente" => $cliente
                 ], 400);
             }

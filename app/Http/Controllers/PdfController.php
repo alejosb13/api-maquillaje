@@ -820,7 +820,7 @@ class PdfController extends Controller
         $export = new ClientExport([
             $dataExcell
         ]);
-
+        // dd($export);
         return Excel::download($export, $fileName);
     }
 

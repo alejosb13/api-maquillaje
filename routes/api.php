@@ -76,6 +76,7 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
 
 
 Route::post('pdf/finanza/estado', [PdfController::class, 'estadoFinanzaPDF']);
+Route::get('xlsx/abonos', [PdfController::class, 'abonos_excell']);
 Route::get('xlsx/registroclientes', [PdfController::class, 'registro_cliente_excell']);
 Route::get('csv/registroclientes', [PdfController::class, 'registro_cliente_csv']);
 Route::get('pdf/registroclientes', [PdfController::class, 'registro_cliente']);

@@ -23,6 +23,7 @@ class CreateMetodoPagosTable extends Migration
 
             $table->integer("tipo")->length(2); // 1 = efectivo, 2 = transferencia, 3 = tarjeta, 4 = cheque
             $table->string("detalle",120)->nullable();
+            $table->string("autorizacion", 20)->nullable();
             $table->integer("estado")->length(1);
 
             $table->timestamps();

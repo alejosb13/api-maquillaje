@@ -13,7 +13,7 @@ class MetodoPago extends Model
     public $tipos = [
         1 => 'Efectivo',
         2 => 'Transferencia',
-        // 3 => 'Tarjeta',
+        3 => 'Tarjeta',
         // 4 => 'Cheque',
     ];
 
@@ -22,6 +22,7 @@ class MetodoPago extends Model
         'tipo',
         'detalle',
         'estado',
+        'autorizacion',
     ];
 
     /**

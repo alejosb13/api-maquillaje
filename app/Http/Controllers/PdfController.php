@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ClientExport;
+use App\Http\Controllers\Traits\AbonoQueryTrait;
 use App\Models\Factura;
 use App\Models\Producto;
 use App\Models\User;
@@ -21,6 +22,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class PdfController extends Controller
 {
+    use AbonoQueryTrait;
+
     public function facturaPago($id, Request $request)
     {
         $response = [];
@@ -815,6 +818,49 @@ class PdfController extends Controller
                 ($cliente->ultimoAbono) ? Carbon::parse($cliente->ultimoAbono->created_at)->format('j-m-Y') : "No posee abonos",
                 $cliente->ultimaFactura ? Carbon::parse($cliente->ultimaFactura->fecha_vencimiento)->format('j-m-Y') : "Sin Facturas",
                 $cliente->dias_cobro,
+            );
+        }
+        $export = new ClientExport([
+            $dataExcell
+        ]);
+        // dd($export);
+        return Excel::download($export, $fileName);
+    }
+
+    public function abonos_excell(Request $request)
+    {
+        $fileName = "abonos_" . Carbon::now('utc')->toDateTimeString() . ".xlsx";
+
+        $columns = array(
+            "#",
+            "Recibo",
+            "Monto",
+            "Método pago",
+            "Detalle pago",
+            "Autorización",
+            "Fecha",
+            "Cliente",
+            "Usuario",
+        );
+
+        $abonos = $this->AbonoListQuery($request);
+        $dataExcell = [
+            $columns
+        ];
+
+
+        foreach ($abonos as $abono) {
+            $dataExcell[] = array(
+                $abono->id,
+                $abono->recibo_historial->numero,
+                $abono->precio,
+                $abono->metodo_pago ? $abono->metodo_pago->tipoPago : "--",
+                $abono->metodo_pago ? $abono->metodo_pago->detalle : "--",
+                $abono->metodo_pago->autorizacion ? $abono->metodo_pago->autorizacion : "--",
+                Carbon::parse($abono->created_at)->format('j-m-Y'),
+                $abono->cliente->nombreCompleto,
+                $abono->usuario->name,
+
             );
         }
         $export = new ClientExport([

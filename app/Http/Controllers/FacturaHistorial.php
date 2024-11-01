@@ -80,13 +80,14 @@ class FacturaHistorial extends Controller
             'user_id' => 'required|numeric',
             'precio' => 'required|numeric',
             'detalle_pago' => 'string|nullable',
+            'autorizacion' => ['string', 'nullable', Rule::unique('metodo_pagos', 'autorizacion')->where('estado', 1)],
             'metodo_pago' => 'required|numeric',
             // 'estado' => 'required|numeric|max:1',
 
             'numero'       => [
                 'required',
                 'numeric',
-                Rule::unique('recibo_historials')->where(fn ($query) => $query->where('estado', 1)),
+                Rule::unique('recibo_historials')->where(fn($query) => $query->where('estado', 1)),
             ],
             // 'numero'       => 'required|numeric',
             'recibo_id'           => 'numeric|required',
@@ -128,6 +129,7 @@ class FacturaHistorial extends Controller
                     'factura_historial_id'  => $abono->id,
                     'tipo'                  => $request['metodo_pago'],
                     'detalle'               => $request['detalle_pago'],
+                    'autorizacion'          => $request['autorizacion'],
                     'estado'                => 1,
                 ]);
 
@@ -214,6 +216,9 @@ class FacturaHistorial extends Controller
                 $validation = Validator::make($request->all(), [
                     'metodoPagoEditar' => 'required|numeric',
                     'detallePagoEditar' => 'required|string',
+                    'autorizacion' => ['string', 'nullable', Rule::unique('metodo_pagos', 'autorizacion')->where(function ($query) {
+                        return $query->where('estado', 1);
+                    })->ignore($abono->id)],
                 ]);
 
                 if ($validation->fails()) {
@@ -224,12 +229,13 @@ class FacturaHistorial extends Controller
                     $abonoUpdate = $abono->update([
                         'tipo' => $request['metodoPagoEditar'],
                         'detalle' => $request['detallePagoEditar'],
+                        'autorizacion' => $request['autorizacion'],
                     ]);
 
                     // $this->validarStatusPagado($id,$request['factura_id']);
 
                     if ($abonoUpdate) {
-                        $response[] = 'Abono modificado con exito.';
+                        $response[] = 'Abono modificado con éxito.';
                         $status = 200;
                     } else {
                         $response[] = 'Error al modificar los datos.';
@@ -239,7 +245,7 @@ class FacturaHistorial extends Controller
                 $response[] = "El abono no existe.";
             }
         } else {
-            $response[] = "El Valor de Id debe ser numerico.";
+            $response[] = "El Valor de Id debe ser numérico.";
         }
 
         return response()->json($response, $status);

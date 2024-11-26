@@ -399,6 +399,7 @@ class ListadosPaginasController extends Controller
 
         $clientes =  Cliente::query();
 
+        $clientes->with('zona','municipio','departamento');
         // ** Filtrado por Estado 
         $clientes->when(isset($request->estado) && $request->estado != 2, function ($q) use ($request) {
             return $q->where('estado', $request->estado);

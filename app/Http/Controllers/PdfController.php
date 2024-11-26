@@ -141,7 +141,7 @@ class PdfController extends Controller
 
         if (is_numeric($id)) {
 
-            $factura =  Factura::with('cliente')->where([
+            $factura =  Factura::with('cliente', 'cliente.zona', 'cliente.departamento', 'cliente.municipio')->where([
                 ['id', '=', $id],
                 // ['estado', '=', $facturaEstado],
             ])->first();
@@ -265,7 +265,7 @@ class PdfController extends Controller
             'data' =>  $factura,
             'productos' => array_chunk(json_decode(json_encode($factura->factura_detalle)), 30),
         ];
-
+        // dd(json_encode( $data));
         $archivo = PDF::loadView('pdf', $data);
         $pdf = PDF::loadView('pdf', $data)->output();
 
@@ -278,7 +278,7 @@ class PdfController extends Controller
     public function estadoCuenta(Request $request)
     {
         $all_datos = queryEstadoCuenta($request->id);
-        $response['cliente'] = Cliente::find($request->id);
+        $response['cliente'] = Cliente::with('departamento', 'zona', 'municipio')->find($request->id);
 
         $response['estado_cuenta'] = array_chunk($all_datos['estado_cuenta'], 30);
 
@@ -419,7 +419,7 @@ class PdfController extends Controller
             ['estado', '=', 1],
         ])->get();
 
-        $data['productos'] = array_chunk(json_decode(json_encode($data['productos'])), 34);
+        $data['productos'] = array_chunk(json_decode(json_encode($data['productos'])), 39);
 
 
         $data = [
@@ -717,7 +717,7 @@ class PdfController extends Controller
         // print_r(json_encode($response));
         // $response['data'] =
         $data = [
-            'data' =>  array_chunk(json_decode(json_encode($response)), 22),
+            'data' =>  array_chunk(json_decode(json_encode($response)), 18),
             'cantidad' => count($response),
         ];
 
@@ -745,11 +745,15 @@ class PdfController extends Controller
         $columns = array(
             'Codigo_Cliente',
             'Nombre_Completo',
+            'Zona',
+            'Departamento',
+            'Municipio',
             'Dirección',
+            'Dirección_Oficina',
             'Celular',
             'Saldo_Actual',
             'Ultima_Fecha_de_Pago',
-            'Dias de Cobro',
+            'Dias_de_Cobro',
         );
 
         $response = $this->registroClienteQuery($request, false);
@@ -767,7 +771,11 @@ class PdfController extends Controller
             $dataCSV[] = array(
                 'Codigo_Cliente' => $cliente->id,
                 'Nombre_Completo' => $cliente->nombreCompleto,
+                'Zona' => isset($cliente->zona) && $cliente->zona ? $cliente->zona->nombre : "-",
+                'Departamento' => isset($cliente->departamento) && $cliente->departamento ? $cliente->departamento->nombre : "-",
+                'Municipio' => isset($cliente->municipio) && $cliente->municipio ? $cliente->municipio->nombre : "-",
                 'Dirección' => $cliente->direccion_casa,
+                'Dirección_Oficina' => $cliente->direccion_casa,
                 'Celular' => $cliente->celular,
                 'Saldo_Actual' => $cliente->saldo,
                 'Ultima_Fecha_de_Pago' => ($cliente->ultimoAbono) ? Carbon::parse($cliente->ultimoAbono->created_at)->format('j-m-Y') : "No posee abonos",
@@ -796,6 +804,9 @@ class PdfController extends Controller
         $columns = array(
             'Codigo_Cliente',
             'Nombre_Completo',
+            'Zona',
+            'Departamento',
+            'Municipio',
             'Dirección',
             'Celular',
             'Saldo_Actual',
@@ -812,6 +823,9 @@ class PdfController extends Controller
             $dataExcell[] = array(
                 $cliente->id,
                 $cliente->nombreCompleto,
+                isset($cliente->zona) && $cliente->zona ? ucwords(strtolower($cliente->zona->nombre)) : "-",
+                isset($cliente->departamento) && $cliente->departamento ? ucwords(strtolower($cliente->departamento->nombre)) : "-",
+                isset($cliente->municipio) && $cliente->municipio ? ucwords(strtolower($cliente->municipio->nombre)) : "-",
                 $cliente->direccion_negocio,
                 $cliente->celular,
                 $cliente->saldo,
@@ -876,7 +890,7 @@ class PdfController extends Controller
 
         // DB::enableQueryLog();
 
-        $clientes =  Cliente::where($parametros);
+        $clientes =  Cliente::with('departamento', 'zona', 'municipio')->where($parametros);
 
         // ** Filtrado por userID
         $clientes->when($request->userId && $request->userId != 0, function ($q) use ($request) {

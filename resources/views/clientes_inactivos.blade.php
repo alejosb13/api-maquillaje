@@ -158,10 +158,11 @@
                         <th>NOMBRE</th>
                         <th>EMPRESA</th>
                         <th>USUARIO</th>
-                        <th>CEDULA</th>
+                        <th>CÉDULA</th>
                         <th>DÍAS COBRO</th>
-                        <th>DIRECCION DE CASA</th>
-                        <th>DIRECCION DE NEGOCIO</th>
+                        <th>UBICACIONES</th>
+                        <th>DIRECCIÓN DE CASA</th>
+                        <th>DIRECCIÓN DE NEGOCIO</th>
                         <!-- <th>CATEGORIA</th>
                         <th>FRECUENCIA</th> -->
                     </tr>
@@ -175,6 +176,19 @@
                         <td>{{ $cliente->user_id ? $cliente->user->name." ".  $cliente->user->apellido : "-" }}</td>
                         <td>{{ $cliente->cedula }}</td>
                         <td>{{ $cliente->dias_cobro }}</td>
+                        <td>
+                            @if (isset($cliente->nombre_departamento) && $cliente->nombre_departamento)
+                            {{ ucwords(strtolower($cliente->nombre_departamento)) }}
+                            @else
+                            -
+                            @endif
+                            -
+                            @if (isset($cliente->nombre_municipio) && $cliente->nombre_municipio)
+                            {{ ucwords(strtolower($cliente->nombre_municipio)) }}
+                            @else
+                            -
+                            @endif
+                        </td>
                         <td>{{ $cliente->direccion_casa }}</td>
                         <td>{{ $cliente->direccion_negocio }}</td>
                         <!-- <td>{{ $cliente->categoria->descripcion }}</td>

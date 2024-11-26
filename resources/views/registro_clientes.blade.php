@@ -70,7 +70,6 @@
     .detail table th {
         text-align: left;
         border-bottom: 1px solid
-        
     }
 
     .detail table td {
@@ -162,7 +161,8 @@
                         <th>Saldo Actual</th>
                         <th>Ultima Fecha de Pago</th>
                         <th>Vencimiento ultima F.</th>
-                        <th>Dias de Cobro</th>
+                        <th>Ubicación</th>
+                        <th>Días de Cobro</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -186,6 +186,19 @@
                         <td>Sin Facturas</td>
 
                         @endif
+                        <td>
+                            @if (isset($historico->departamento) && $historico->departamento)
+                            {{ ucwords(strtolower($historico->departamento->nombre)) }}
+                            @else
+                            -
+                            @endif
+                            -
+                            @if (isset($historico->municipio) && $historico->municipio)
+                            {{ ucwords(strtolower($historico->municipio->nombre)) }}
+                            @else
+                            -
+                            @endif
+                        </td>
                         <td>{!! $historico->dias_cobro !!}</td>
                     </tr>
                     @endforeach

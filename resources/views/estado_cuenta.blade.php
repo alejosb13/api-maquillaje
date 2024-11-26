@@ -125,18 +125,17 @@
         <div class="seccion_supeior">
             <div class="left">
                 <span class="direccion"><b>Nombre Completo:</b> {{ $data['cliente']['nombreCompleto'] }}</span>
-                <span class="direccion"><b>Nombre salon:</b> {{ $data['cliente']['nombreEmpresa']}}</span>
-                <span class="direccion"><b>Cedula:</b> {{$data['cliente']['cedula']}}</span>
+                <span class="direccion"><b>Nombre salón:</b> {{ $data['cliente']['nombreEmpresa']}}</span>
+                <span class="direccion"><b>Cédula:</b> {{$data['cliente']['cedula']}}</span>
                 <span class="direccion"><b>Teléfono:</b> {{$data['cliente']['celular']}}</span>
             </div>
 
             <div class="right">
-                <span class="direccion"><b>Teléfono salon:</b> {{$data['cliente']['telefono']}}</span>
-                <span style="width: 350px;"><b>Dirección:</b> {{$data['cliente']['direccion_casa']}}</span>
-                <span style="width: 350px;"><b>Dirección salon:</b> {{$data['cliente']['direccion_negocio']}}</span>
+                <span class="direccion"><b>Teléfono salón:</b> {{$data['cliente']['telefono']}}</span>
+                <span style="width: 350px;"><b>Dirección:</b>{{ $data['cliente']['departamento'] ? ucwords(strtolower($data['cliente']['departamento']['nombre'])) :""}} - {{$data['cliente']['municipio']?ucwords(strtolower($data['cliente']['departamento']['nombre'])):"" }} - {{$data['cliente']['direccion_casa']}}</span>
+                <span style="width: 350px;"><b>Dirección salón:</b>{{ $data['cliente']['departamento'] ? ucwords(strtolower($data['cliente']['departamento']['nombre'])) :""}} - {{$data['cliente']['municipio']?ucwords(strtolower($data['cliente']['departamento']['nombre'])):"" }} - {{ $data['cliente']['direccion_negocio']}}</span>
             </div>
         </div>
-
         <div class="detail">
             <table style="width: 100%">
                 <thead>

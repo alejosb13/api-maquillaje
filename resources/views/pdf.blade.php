@@ -161,10 +161,8 @@
                 <span class="direccion"><b>Nombre Completo:</b> {{$data->cliente->nombreCompleto}}</span>
                 <span class="direccion"><b>Nombre salon:</b> {{$data->cliente->nombreEmpresa}}</span>
                 <span class="direccion"><b>Cedula:</b> {{$data->cliente->cedula}}</span>
-                {{-- <span><b>Dirección:</b> {{$data->cliente->direccion_casa}}</span>
-                <span><b>Dirección salon:</b> {{$data->cliente->direccion_negocio}}</span> --}}
-                <span class="direccion"><b>Dirección:</b> {{$data->cliente->direccion_casa}}</span>
-                <span class="direccion"><b>Dirección salon:</b> {{$data->cliente->direccion_negocio}}</span>
+                <span class="direccion"><b>Dirección:</b> {{ $data->cliente->departamento ? ucwords(strtolower($data->cliente->departamento->nombre)) :""}} - {{$data->cliente->municipio?ucwords(strtolower($data->cliente->municipio->nombre)):"" }} - {{ $data->cliente->direccion_casa }}</span>
+                <span class="direccion"><b>Dirección salon:</b> {{ $data->cliente->departamento ? ucwords(strtolower($data->cliente->departamento->nombre)) :""}} - {{$data->cliente->municipio?ucwords(strtolower($data->cliente->municipio->nombre)):"" }} - {{$data->cliente->direccion_negocio}}</span>
                 <span class="direccion"><b>Teléfono:</b> {{$data->cliente->celular}}</span>
                 <span class="direccion"><b>Teléfono salon:</b> {{$data->cliente->telefono}}</span>
             </div>
@@ -174,6 +172,7 @@
                 <span><b>Fecha vencimiento:</b> {{ date("d/m/Y", strtotime($data->fecha_vencimiento)) }}</span>
                 <span><b>Tipo Operacion:</b> {{ ($data->tipo_venta == 1)? 'Credito' : 'Contado'}}</span>
                 <span><b>Estado:</b> {{ ($data->status_pagado == 0)? 'En proceso' : 'Finalizado'}}</span>
+                <span><b>Zona:</b> {{ $data->cliente->zona ? ucwords(strtolower($data->cliente->zona->nombre)) : ''}}</span>
                 <!-- <span><b>Vendedor:</b> {{ $data->user_data->name .' '. $data->user_data->apellido }}</span> -->
             </div>
         </div>

@@ -493,6 +493,10 @@ function carteraQuery($request)
                 ['estado', '=', 1],
             ])->get();
 
+            $factura->cliente->zona;
+            $factura->cliente->departamento;
+            $factura->cliente->municipio;
+
             $factura->montos_recibos = $factura
                 ->cliente
                 ->factura_historial()
@@ -1072,7 +1076,7 @@ function incentivosQuery($request)
                     if ($fechaActual->greaterThanOrEqualTo($fechaLimite) && ($userId == 28 || $userId == 34)) {
                         // $porcentaje = 0.22;
                         $response["porcentaje_asignado"] = 0.22;
-                    } 
+                    }
 
                     $response["porcentaje20"] += decimal($recibo_historial->factura_historial->precio * $response["porcentaje_asignado"]);
 
@@ -1806,7 +1810,7 @@ function clienteNuevo($request)
             ->where('created_at', '<', $dateIni->toDateString() . " 00:00:00")
             ->where($condiciones);
     })
-        ->with(['frecuencia', 'categoria', 'facturas'])
+        ->with(['frecuencia', 'categoria', 'facturas', 'departamento', 'municipio', 'zona'])
         ->whereHas('facturas', function ($query) use ($dateIni, $dateFin, $condiciones) {
             // Asegura que el cliente tenga al menos una factura en el rango de fechas del mes actual, con facturas activas (status = 1), saldo restante mayor a 1 y que coincidan con el user_id.
             $query
@@ -1879,11 +1883,14 @@ function clientesInactivosQuery($request)
     // DB::enableQueryLog();
 
     $query = "SELECT
-        c.*,
-        q.cantidad_factura,
-        q.cantidad_finalizadas,
-        q.last_date_finalizada,
-        if(q.cantidad_factura = q.cantidad_finalizadas, 1, 0) AS cliente_inactivo
+            c.*,
+            q.cantidad_factura,
+            q.cantidad_finalizadas,
+            q.last_date_finalizada,
+            if(q.cantidad_factura = q.cantidad_finalizadas, 1, 0) AS cliente_inactivo,
+            zon.nombre AS 'nombre_zona',
+            dep.nombre AS 'nombre_departamento',
+            mun.nombre AS 'nombre_municipio'    
         FROM clientes c
         INNER JOIN (
             SELECT
@@ -1897,13 +1904,17 @@ function clientesInactivosQuery($request)
             FROM clientes c
             INNER JOIN facturas f ON c.id = f.cliente_id
             INNER JOIN categorias cat ON c.categoria_id = cat.id 
+
             WHERE  f.`status` = 1 AND c.estado = 1 AND cat.tipo !='DP'
             GROUP BY c.id
             ORDER BY c.id ASC
         )q ON c.id = q.cliente_id
+            LEFT JOIN zonas zon ON zon.id = c.zona_id 
+            LEFT JOIN departamentos dep ON dep.id = c.departamento_id 
+            LEFT JOIN municipios mun ON mun.id = c.municipio_id        
         WHERE
             q.cantidad_factura = q.cantidad_finalizadas AND
-            TIMESTAMPDIFF(MONTH,last_date_finalizada, NOW()) >= 1
+            TIMESTAMPDIFF(MONTH,last_date_finalizada, NOW()) >= 1 
     ";
 
     if ($request->userId != 0) {

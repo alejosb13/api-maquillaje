@@ -49,12 +49,27 @@ class Cliente extends Model
     // one to many inversa
     public function frecuencia()
     {
-        return $this->belongsTo(Frecuencia::class,"frecuencia_id","id");
+        return $this->belongsTo(Frecuencia::class, "frecuencia_id", "id");
     }
 
     // one to many inversa
     public function usuario()
     {
-        return $this->belongsTo(User::class,"user_id","id");
+        return $this->belongsTo(User::class, "user_id", "id");
+    }
+
+    public function zona()
+    {
+        return $this->belongsTo(Zona::class, "zona_id", "id");
+    }
+
+    public function departamento()
+    {
+        return $this->belongsTo(Departamento::class, "departamento_id", "id");
+    }
+
+    public function municipio()
+    {
+        return $this->belongsTo(Municipio::class, "municipio_id", "id");
     }
 }

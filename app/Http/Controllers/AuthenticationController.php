@@ -66,6 +66,8 @@ class AuthenticationController extends Controller
             //     'token' => $user->createToken($request->device_name)->plainTextToken,
             // ]);
 
+            //$user->tokens()->delete();
+            
             $dataCierre = ConfigurationApp::first();
             if ($dataCierre->cierre == 1) {
                 if (!$user->hasAnyRole(["administrador"])) return response()->json(['mensaje' => "La app tiene el cierre activo"], 401);

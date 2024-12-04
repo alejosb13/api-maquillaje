@@ -257,7 +257,7 @@ function ActualizarPrecioFactura($factura_id)
         // $factura->monto = 0;
         // $factura->saldo_restante = 0;
 
-        // desactibo la factura para que no se tome en cuenta
+        // desactivo la factura para que no se tome en cuenta
         $factura->status = 0;
         validarFacturaClienteReactivado($factura_id);
     }

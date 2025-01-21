@@ -255,9 +255,22 @@ class ReciboController extends Controller
 
         $recibo =  Recibo::find($id);
         if (!$recibo) {
-            $response[] = "El Recibo no existe.";
-            return response()->json($response, $status);
+            // $response[] = "El Recibo no existe.";
+            // return response()->json($response, $status);
+            
+            // Si no existe el recibo lo creo y retorno el id
+            $recibo = Recibo::firstOrCreate([
+                'max' => $request['max'],
+                'min' => $request['min'],
+                'user_id' => $request['user_id'],
+                'estado' => $request['estado'],
+            ]);
+            $id = $recibo->id; 
+            // print_r(json_encode($recibo));
+            // $recibo =  Recibo::find($response->id);
         }
+
+
 
         if ($validation->fails()) {
             return response()->json([$validation->errors()], 400);
@@ -269,7 +282,7 @@ class ReciboController extends Controller
         }
 
         // dd("test");
-
+            // print_r(json_encode($id));
         if ($this->validNumberRange($request['min'], $request['max'], $id)) {
             $reciboUpdate = $recibo->update([
                 'max' => $request['max'],

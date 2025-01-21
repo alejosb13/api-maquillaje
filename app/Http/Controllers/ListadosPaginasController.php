@@ -399,7 +399,7 @@ class ListadosPaginasController extends Controller
 
         $clientes =  Cliente::query();
 
-        $clientes->with('zona','municipio','departamento');
+        $clientes->with('zona', 'municipio', 'departamento');
         // ** Filtrado por Estado 
         $clientes->when(isset($request->estado) && $request->estado != 2, function ($q) use ($request) {
             return $q->where('estado', $request->estado);
@@ -439,6 +439,65 @@ class ListadosPaginasController extends Controller
             }
             return $query->where($condicionDiasCobro);
         });
+
+
+        $clientes->addSelect([
+            'saldo' => function ($query) {
+                $query->selectRaw('
+                     ROUND(COALESCE(
+                        (SELECT SUM(facturas.monto)
+                         FROM facturas
+                         WHERE facturas.cliente_id = clientes.id
+                           AND facturas.status = 1
+                           AND facturas.tipo_venta = 1), 0),2
+                    )
+                    -
+                     ROUND(
+                    COALESCE(
+                        (SELECT SUM(historial.precio)
+                         FROM factura_historials as historial
+                         WHERE historial.cliente_id = clientes.id
+                           AND historial.estado = 1), 0),2
+                           )
+                ');
+            }
+        ]);
+        $clientes->when(isset($request->saldoFil) && $request->saldoFil != 2, function ($q) use ($request) {
+            if ($request->saldoFil == 1) {
+                return $q->whereRaw('
+                    ROUND(
+                        COALESCE(
+                            (SELECT SUM(facturas.monto)
+                            FROM facturas
+                            WHERE facturas.cliente_id = clientes.id
+                            AND facturas.status = 1
+                            AND facturas.tipo_venta = 1), 0)
+                        -
+                        COALESCE(
+                            (SELECT SUM(historial.precio)
+                            FROM factura_historials as historial
+                            WHERE historial.cliente_id = clientes.id
+                            AND historial.estado = 1), 0), 2
+                    ) > 0');
+            } else {
+                return $q->whereRaw('
+                    ROUND(
+                        COALESCE(
+                            (SELECT SUM(facturas.monto)
+                            FROM facturas
+                            WHERE facturas.cliente_id = clientes.id
+                            AND facturas.status = 1
+                            AND facturas.tipo_venta = 1), 0)
+                        -
+                        COALESCE(
+                            (SELECT SUM(historial.precio)
+                            FROM factura_historials as historial
+                            WHERE historial.cliente_id = clientes.id
+                            AND historial.estado = 1), 0), 2
+                    ) <= 0');
+            }
+        });
+
 
         $clientes->when($request->categoriaId && $request->categoriaId != 0, function ($q) use ($request) {
             $query = $q;
@@ -578,22 +637,33 @@ class ListadosPaginasController extends Controller
                 $clientes->categoria = $cliente->categoria;
                 $clientes->facturas = $cliente->facturas;
                 $clientes->usuario = $cliente->usuario;
+                // dd($cliente)
 
-                $saldoCliente = calcularDeudaFacturasGlobal($cliente->id);
-
-                if ($saldoCliente > 0) {
-                    $cliente->saldo = number_format(-(float) $saldoCliente, 2);
-                }
-
-                if ($saldoCliente == 0) {
-                    $cliente->saldo = $saldoCliente;
-                }
-
-                if ($saldoCliente < 0) {
+                // $cliente->saldo = decimal(filter_var($cliente->saldo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                // if ($cliente->saldo < 0) {
                     // $cliente->saldo = number_format((float) str_replace("-", "", $saldoCliente), 2);
-                    $saldo_sin_guion = str_replace("-", "", $saldoCliente);
-                    $cliente->saldo = decimal(filter_var($saldo_sin_guion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-                }
+                    // $saldo_sin_guion = str_replace("-", "", $cliente->saldo);
+                    // $cliente->saldo = decimal(filter_var($saldo_sin_guion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                // }
+
+                // if($request->saldoFil && $request->saldoFil != 2){
+                // $saldoCliente = calcularDeudaFacturasGlobal($cliente->id);
+
+                //     if ($saldoCliente > 0) {
+                //         $cliente->saldo2 = number_format(-(float) $saldoCliente, 2);
+                //     }
+
+                //     if ($saldoCliente == 0) {
+                //         $cliente->saldo2 = $saldoCliente;
+                //     }
+
+                //     if ($saldoCliente < 0) {
+                //         // $cliente->saldo = number_format((float) str_replace("-", "", $saldoCliente), 2);
+                // $saldo_sin_guion = str_replace("-", "", $saldoCliente);
+                // $cliente->saldo2 = decimal(filter_var($saldo_sin_guion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                //     }
+                // }
+
                 // dd($cliente->saldo);
             }
 

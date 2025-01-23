@@ -395,7 +395,7 @@ class ListadosPaginasController extends Controller
             $dateFin = Carbon::parse($request->dateFin);
         }
 
-        DB::enableQueryLog();
+        // DB::enableQueryLog();
 
         $clientes =  Cliente::query();
 

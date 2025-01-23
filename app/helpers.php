@@ -362,25 +362,32 @@ function queryEstadoCuenta($cliente_id)
                     'Pedido' as tipo_documento,
                     f.created_at AS fecha,
                     f.fecha_vencimiento AS f_vencimiento,
-                f.monto AS credito,
-                    '' AS abono
+                    f.monto AS credito,
+                    '' AS abono,
+                    '--' AS autorizacion                    
                 FROM clientes c
                 INNER JOIN facturas f ON f.cliente_id = c.id
                 WHERE
                     f.`status` = 1 AND
                     f.tipo_venta = 1
-                    UNION ALL
+            UNION ALL
                 SELECT
                     c.id AS cliente_id,
                     CONCAT('REC-', rh.numero ) AS `numero_documento`,
                     'Recibo' as tipo_documento,
                     rh.created_at AS fecha,
                     rh.created_at AS f_vencimiento,
-                '' AS credito,
-                    fh.precio AS abono
+                    '' AS credito,
+                    fh.precio AS abono,
+					CASE 
+                        WHEN mp.tipo = 2 THEN CONCAT('tf-', COALESCE(mp.autorizacion, '--'))
+                        WHEN mp.tipo = 3 THEN CONCAT('tc-', COALESCE(mp.autorizacion, '--'))
+						ELSE CONCAT('efvo', COALESCE(mp.autorizacion, '--'))
+					END AS `autorizacion`
                 FROM	clientes c
                 INNER JOIN factura_historials fh ON fh.cliente_id = c.id
                 INNER JOIN recibo_historials rh ON rh.factura_historial_id = fh.id
+                INNER JOIN metodo_pagos mp ON mp.factura_historial_id = fh.id
                 WHERE
                     fh.`estado` = 1
             ) estado_cuenta

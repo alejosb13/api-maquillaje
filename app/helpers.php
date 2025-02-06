@@ -387,7 +387,7 @@ function queryEstadoCuenta($cliente_id)
                 FROM	clientes c
                 INNER JOIN factura_historials fh ON fh.cliente_id = c.id
                 INNER JOIN recibo_historials rh ON rh.factura_historial_id = fh.id
-                INNER JOIN metodo_pagos mp ON mp.factura_historial_id = fh.id
+                LEFT JOIN metodo_pagos mp ON mp.factura_historial_id = fh.id
                 WHERE
                     fh.`estado` = 1
             ) estado_cuenta

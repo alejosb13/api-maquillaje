@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\ClientesInactivosNotas;
 use App\Models\Producto;
 use App\Models\User;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -70,6 +71,32 @@ class LogisticaController extends Controller
     {
         $response = queryEstadoCuenta($request->cliente_id);
         $response["cliente"] = Cliente::find($request->cliente_id);
+
+
+        $totalDias = 0;
+        $contador = 0;
+        $facturasDias = [];
+        
+        foreach ($response["facturas"] as $factura) {
+            if (!empty($factura->status_pagado_at)) {
+                $fechaCreacion = new DateTime($factura->fecha);
+                $fechaPago = new DateTime($factura->status_pagado_at);
+                $dias = $fechaCreacion->diff($fechaPago)->days;
+                
+                $totalDias += $dias;
+                $contador++;
+                
+                $facturasDias[] = [
+                    'numero_documento' => $factura->numero_documento,
+                    'fecha' => $factura->fecha,
+                    'fecha_cierre' => $factura->status_pagado_at,
+                    'dias_para_pago' => $dias,
+                ];
+            }
+        }
+        
+        $response["diasPromedio"] = $contador > 0 ? decimal($totalDias / $contador) : 0;
+        $response["diasFacturas"] = $facturasDias;
 
         return response()->json($response, 200);
     }

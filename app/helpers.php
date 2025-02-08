@@ -364,7 +364,8 @@ function queryEstadoCuenta($cliente_id)
                     f.fecha_vencimiento AS f_vencimiento,
                     f.monto AS credito,
                     '' AS abono,
-                    '--' AS autorizacion                    
+                    '--' AS autorizacion,                    
+                    f.status_pagado_at                      
                 FROM clientes c
                 INNER JOIN facturas f ON f.cliente_id = c.id
                 WHERE
@@ -383,7 +384,8 @@ function queryEstadoCuenta($cliente_id)
                         WHEN mp.tipo = 2 THEN CONCAT('tf-', COALESCE(mp.autorizacion, '--'))
                         WHEN mp.tipo = 3 THEN CONCAT('tc-', COALESCE(mp.autorizacion, '--'))
 						ELSE CONCAT('efvo', COALESCE(mp.autorizacion, '--'))
-					END AS `autorizacion`
+					END AS `autorizacion`,
+                    '' as status_pagado_at            
                 FROM	clientes c
                 INNER JOIN factura_historials fh ON fh.cliente_id = c.id
                 INNER JOIN recibo_historials rh ON rh.factura_historial_id = fh.id

@@ -275,6 +275,149 @@ class PdfController extends Controller
         return $archivo->download('factura_' . $response->id . '.pdf');
     }
 
+    public function facturaDetalleDolar($id)
+    {
+        $response = [];
+        $regaloList = [];
+        $status = 400;
+        $facturaEstado = 1; // Activo
+
+        if (is_numeric($id)) {
+
+            $factura =  Factura::with('cliente', 'cliente.zona', 'cliente.departamento', 'cliente.municipio')->where([
+                ['id', '=', $id],
+                // ['estado', '=', $facturaEstado],
+            ])->first();
+
+            /// datos del vendedor
+
+            $factura->user_data =  User::where([
+                ['id', '=', $factura->user_id],
+                // ['estado', '=', $facturaEstado],
+            ])->first();
+
+            $factura_detalle = Factura_Detalle::where([
+                ['factura_detalles.estado', '=', 1],
+                ['factura_detalles.factura_id', '=', $factura->id],
+            ])
+                ->join('productos', 'productos.id', '=', 'factura_detalles.producto_id')
+                ->select(DB::raw('productos.*,factura_detalles.*,factura_detalles.id AS factura_detalle_id '))
+                ->get();
+
+            // $taza = TazaCambioFactura::where("factura_id", $factura->id)->first();
+            // if (!is_null($taza)) { // si la factura tiene taza de cambio utilizo esa taza para convertir los montos
+
+            //     // dd("1");
+            //     $factura->monto = decimal($factura->monto) * decimal($taza->monto);
+            //     $factura->saldo_restante = decimal($factura->saldo_restante) * decimal($taza->monto);
+
+            //     $detalleFactura = [];
+            //     foreach ($factura_detalle  as $detalle) {
+            //         $detalle->precio = decimal($detalle->precio) * decimal($taza->monto);
+            //         $detalle->precio_unidad = decimal($detalle->precio_unidad) * decimal($taza->monto);
+
+            //         array_push($detalleFactura, $detalle);
+            //     }
+            //     $factura->factura_detalle = $detalleFactura;
+            // } else {
+            //     // dd(json_encode($factura_detalle));
+            //     // dd(convertTazaCambio(1));
+                // $factura->monto = convertTazaCambio($factura->monto);
+                // $factura->saldo_restante = convertTazaCambio($factura->saldo_restante);
+
+                $detalleFactura = [];
+                foreach ($factura_detalle  as $detalle) {
+                    // $detalle->precio = convertTazaCambio($detalle->precio);
+                    // $detalle->precio_unidad = convertTazaCambio($detalle->precio_unidad);
+
+                    array_push($detalleFactura, $detalle);
+                }
+                $factura->factura_detalle = $detalleFactura;
+            // }
+
+            // print_r(json_encode($factura));
+            // dd(json_encode($factura));
+            if ($factura) {
+                $response = $factura;
+                $status = 200;
+            } else {
+                $response[] = "La factura no existe o fue eliminado.";
+            }
+        } else {
+            $response[] = "El Valor de Id debe ser numerico.";
+        }
+
+        // dd(json_encode($factura->factura_detalle));
+
+        if (count($factura->factura_detalle) > 0) {
+            foreach ($factura->factura_detalle as $productoDetalle) {
+
+                $productoDetalle->is_gift = false;
+                $regalo_producto = RegalosFacturados::where([
+                    // ['regalos_facturados.estado', '=', 1],
+                    ['regalos_facturados.factura_detalle_id', '=', $productoDetalle->factura_detalle_id],
+                ])
+                    ->join('producto_para_regalos', 'producto_para_regalos.id', '=', 'regalos_facturados.regalo_id')
+                    ->join('productos', 'productos.id', '=', 'producto_para_regalos.id_producto_regalo')
+                    ->get();
+                // print_r(json_encode($regalo_producto));
+                if (count($regalo_producto) > 0) {
+                    foreach ($regalo_producto as $regaloF) {
+                        // detalle_regalo ->descripcion
+                        // cantidad_regalada
+
+                        $objRegalo = (object)[
+                            "descripcion" => $regaloF->descripcion,
+                            "cantidad_regalada" => $regaloF->cantidad_regalada,
+                            "is_gift" => true,
+                        ];
+                        // "id": 4921,
+                        // "marca": "Colortrak",
+                        // "modelo": "Colortrak",
+                        // "stock": 22,
+                        // "precio": 2469.6,
+                        // "linea": "Brochas",
+                        // "descripcion": "Kit de tres brochas multicolor",
+                        // "estado": 1,
+                        // "created_at": "2023-09-05T23:19:06.000000Z",
+                        // "updated_at": "2023-09-05T23:29:34.000000Z",
+                        // "producto_id": 29,
+                        // "factura_id": 3138,
+                        // "cantidad": 4,
+                        // "precio_unidad": 617.4,
+                        // "factura_detalle_id": 4921
+
+                        $regaloF->regalo;
+                        $regaloF->detalle_regalo = Producto::where([
+                            ['id', '=', $regaloF->regalo->factura_detalle_id],
+                        ])->first();
+                        array_push($regaloList, $objRegalo);
+                    }
+                }
+            }
+        }
+
+        if (count($regaloList) > 0) {
+            $factura->factura_detalle = array_merge($factura->factura_detalle, $regaloList, $factura->factura_detalle);
+        }
+
+        // $data['productos'] = array_chunk(json_decode(json_encode($factura->factura_detalle)), 6);
+        // dd(json_encode($factura));
+
+        $data = [
+            'data' =>  $factura,
+            'productos' => array_chunk(json_decode(json_encode($factura->factura_detalle)), 30),
+        ];
+        // dd(json_encode( $data));
+        $archivo = PDF::loadView('factura_detalle_dolar', $data);
+        $pdf = PDF::loadView('factura_detalle_dolar', $data)->output();
+
+        Storage::disk('public')->put('factura.pdf', $pdf);
+
+
+        return $archivo->download('factura_' . $response->id . '.pdf');
+    }
+
     public function estadoCuenta(Request $request)
     {
         $all_datos = queryEstadoCuenta($request->id);

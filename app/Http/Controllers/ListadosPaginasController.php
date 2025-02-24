@@ -46,6 +46,7 @@ class ListadosPaginasController extends Controller
         if (!is_null($request['status_entrega'])) $parametros[] = ["entregado", $request['status_entrega']];
         if (!is_null($request['despachado'])) $parametros[] = ["despachado", $request['despachado']];
         if (!is_null($request['userId']) && $request['userId'] != 0) $parametros[] = ["user_id", $request['userId']];
+        if (!is_null($request['clienteId']) && $request['clienteId'] != 0) $parametros[] = ["cliente_id", $request['clienteId']];
         if (!is_null($request['created_at'])) {
             $created_at = Carbon::parse($request['created_at']);
             $parametros[] = ["created_at", '>=', $created_at . " 00:00:00"];
@@ -78,7 +79,12 @@ class ListadosPaginasController extends Controller
         }); // Fin Filtrado por Factura
 
         // dd(json_encode($facturas));
-        $facturas = $facturas->paginate(15);
+
+        if ($request->disablePaginate == 0) {
+            $facturas = $facturas->orderBy('created_at', 'desc')->paginate(15);
+        } else {
+            $facturas = $facturas->get();
+        }
         // dd(DB::getQueryLog());
 
         if (count($facturas) > 0) {

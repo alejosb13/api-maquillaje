@@ -14,4 +14,9 @@ class CostosVentas extends Model
         'estado',
     ];
 
+    public function costo_ventas_detalles()
+    {
+        return $this->hasMany(CostosVentasDetalle::class, 'costos_ventas_id');
+    }
+
 }

@@ -1082,10 +1082,10 @@ function incentivosQuery($request)
                 if ($recibo_historial->factura_historial) {
                     $response["total_contado"] += $recibo_historial->factura_historial->precio;
 
-                    if ($fechaActual->greaterThanOrEqualTo($fechaLimite) && ($userId == 28 || $userId == 34)) {
-                        // $porcentaje = 0.22;
-                        $response["porcentaje_asignado"] = 0.22;
-                    }
+                    // if ($fechaActual->greaterThanOrEqualTo($fechaLimite) && ($userId == 28 || $userId == 34)) {
+                    //     // $porcentaje = 0.22;
+                    //     $response["porcentaje_asignado"] = 0.22;
+                    // }
 
                     $response["porcentaje20"] += decimal($recibo_historial->factura_historial->precio * $response["porcentaje_asignado"]);
 
@@ -2322,6 +2322,10 @@ function ListadoCostosProductosVendidos($request)
             //     FROM inversion_details
             //     )')]
         ])
+            ->whereBetween('created_at', [
+                $dateIni->toDateString() . " 00:00:00",
+                $dateFin->toDateString() . " 23:59:59"
+            ])
             ->orderBy("updated_at", "desc")
             ->first();
 
@@ -2329,11 +2333,24 @@ function ListadoCostosProductosVendidos($request)
             // $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
             $response["costoTotal"] += decimal($inversion->costo_total * $productoVentaTotal->cantidad);
         } else {
-            $costo_opcional = CostosVentas::where([
-                ["producto_id", "=", $productoVentaTotal->id]
-            ])->first();
+
+            $costo_opcional = CostosVentas::where('producto_id', $productoVentaTotal->id)
+                ->whereHas('costo_ventas_detalles', function ($query) use ($dateIni, $dateFin) {
+                    $query->whereBetween('fecha', [
+                        $dateIni->toDateString() . " 00:00:00",
+                        $dateFin->toDateString() . " 23:59:59"
+                    ]);
+                })
+                ->with(['costo_ventas_detalles' => function ($query) use ($dateIni, $dateFin) {
+                    $query->whereBetween('fecha', [
+                        $dateIni->toDateString() . " 00:00:00",
+                        $dateFin->toDateString() . " 23:59:59"
+                    ]);
+                }])
+                ->first();
+
             if ($costo_opcional) {
-                $response["costoTotal"] += decimal($costo_opcional->costo * $productoVentaTotal->cantidad);
+                $response["costoTotal"] += decimal($costo_opcional->costo_ventas_detalles[0]->costo * $productoVentaTotal->cantidad);
             }
         }
     }
@@ -2345,11 +2362,22 @@ function ListadoCostosProductosVendidos($request)
     }
 
     foreach ($productoVendidos as $productoVendido) {
-        $productoVendido->costo_opcional = CostosVentas::where([
-            ["producto_id", "=", $productoVendido->id]
-        ])->first();
-
         // DB::enableQueryLog();
+        $productoVendido->costo_opcional = CostosVentas::where('producto_id', $productoVendido->id)
+            ->whereHas('costo_ventas_detalles', function ($query) use ($dateIni, $dateFin) {
+                $query->whereBetween('fecha', [
+                    $dateIni->toDateString() . " 00:00:00",
+                    $dateFin->toDateString() . " 23:59:59"
+                ]);
+            })
+            ->with(['costo_ventas_detalles' => function ($query) use ($dateIni, $dateFin) {
+                $query->whereBetween('fecha', [
+                    $dateIni->toDateString() . " 00:00:00",
+                    $dateFin->toDateString() . " 23:59:59"
+                ]);
+            }])
+            ->first();
+
         $productoVendido->inversion = InversionDetail::where([
             ["codigo", "=", $productoVendido->id],
             ["estado", "=", 1],
@@ -2362,6 +2390,7 @@ function ListadoCostosProductosVendidos($request)
             ->first();
 
         // $query = DB::getQueryLog();
+        // print_r($query);
         // if ($productoVendido->id == 129) {
         //     dd($query);
         // }

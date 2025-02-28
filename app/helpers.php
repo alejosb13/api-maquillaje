@@ -2314,43 +2314,39 @@ function ListadoCostosProductosVendidos($request)
 
     $todosLosProductos = $productoVendidos->get();
     foreach ($todosLosProductos as $productoVentaTotal) {
-        $inversion = InversionDetail::where([
-            ["codigo", "=", $productoVentaTotal->id],
-            ["estado", "=", 1],
-            // ["updated_at", "=", DB::raw('(
-            //     SELECT MAX(updated_at)
-            //     FROM inversion_details
-            //     )')]
-        ])
-            ->whereBetween('created_at', [
-                $dateIni->toDateString() . " 00:00:00",
-                $dateFin->toDateString() . " 23:59:59"
-            ])
-            ->orderBy("updated_at", "desc")
+
+        $costo_opcional = CostosVentas::where('producto_id', $productoVentaTotal->id)
+            ->whereHas('costo_ventas_detalles', function ($query) use ($dateIni, $dateFin) {
+                $query->whereBetween('fecha', [
+                    $dateIni->toDateString() . " 00:00:00",
+                    $dateFin->toDateString() . " 23:59:59"
+                ]);
+            })
+            ->with(['costo_ventas_detalles' => function ($query) use ($dateIni, $dateFin) {
+                $query->whereBetween('fecha', [
+                    $dateIni->toDateString() . " 00:00:00",
+                    $dateFin->toDateString() . " 23:59:59"
+                ]);
+            }])
             ->first();
 
-        if ($inversion) {
-            // $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
-            $response["costoTotal"] += decimal($inversion->costo_total * $productoVentaTotal->cantidad);
+        if ($costo_opcional) {
+            $response["costoTotal"] += decimal($costo_opcional->costo_ventas_detalles[0]->costo * $productoVentaTotal->cantidad);
         } else {
-
-            $costo_opcional = CostosVentas::where('producto_id', $productoVentaTotal->id)
-                ->whereHas('costo_ventas_detalles', function ($query) use ($dateIni, $dateFin) {
-                    $query->whereBetween('fecha', [
-                        $dateIni->toDateString() . " 00:00:00",
-                        $dateFin->toDateString() . " 23:59:59"
-                    ]);
-                })
-                ->with(['costo_ventas_detalles' => function ($query) use ($dateIni, $dateFin) {
-                    $query->whereBetween('fecha', [
-                        $dateIni->toDateString() . " 00:00:00",
-                        $dateFin->toDateString() . " 23:59:59"
-                    ]);
-                }])
+            $inversion = InversionDetail::where([
+                ["codigo", "=", $productoVentaTotal->id],
+                ["estado", "=", 1],
+                // ["updated_at", "=", DB::raw('(
+                //     SELECT MAX(updated_at)
+                //     FROM inversion_details
+                //     )')]
+            ])
+                ->orderBy("updated_at", "desc")
                 ->first();
+            // $response["costoTotal"] += decimal($inversion->costo * $productoVentaTotal->cantidad);
 
-            if ($costo_opcional) {
-                $response["costoTotal"] += decimal($costo_opcional->costo_ventas_detalles[0]->costo * $productoVentaTotal->cantidad);
+            if ($inversion) {
+                $response["costoTotal"] += decimal($inversion->costo_total * $productoVentaTotal->cantidad);
             }
         }
     }
@@ -2378,7 +2374,7 @@ function ListadoCostosProductosVendidos($request)
             }])
             ->first();
 
-        $productoVendido->inversion = InversionDetail::where([
+        $productoVendido->inversion = $productoVendido->costo_opcional ? null : InversionDetail::where([
             ["codigo", "=", $productoVendido->id],
             ["estado", "=", 1],
             // ["updated_at", "=", DB::raw('(
